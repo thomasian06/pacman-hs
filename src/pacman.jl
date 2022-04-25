@@ -19,7 +19,7 @@ mutable struct Pacman
         game_size::Int = 3,
         xp::Int = 1,
         xg::Vector{Int} = [9],
-        pg::Vector{<:GhostPolicy} = [RandomGhostPolicy()],
+        pg_types::Vector{Symbol} = [:RandomGhostPolicy],
         available_squares::Vector{Int} = [1, 2, 3, 4, 6, 7, 8, 9],
         available_pellets::Vector{},
         available_power_pellets::Vector{},
@@ -49,6 +49,8 @@ mutable struct Pacman
         end
 
         ng = length(xg)
+
+        pg = [policy_map[s](squares) for s in pg_types]
 
         n_squares = game_size^2
 

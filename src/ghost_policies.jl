@@ -5,6 +5,9 @@ struct RandomGhostPolicy <: GhostPolicy
     function RandomGhostPolicy()
         new(1)
     end
+    function RandomGhostPolicy(squares::BitArray{2})
+        new(1)
+    end
 end
 
 struct DeterministicRoutePolicy <: GhostPolicy
@@ -20,3 +23,6 @@ struct ShortestDistancePolicy <: GhostPolicy
         new(1)
     end
 end
+
+available_policies = [:RandomGhostPolicy, :DeterministicRoutePolicy, :ShortestDistancePolicy]
+policy_map = Dict{Symbol, Any}(:RandomGhostPolicy => RandomGhostPolicy, :DeterministicRoutePolicy => DeterministicRoutePolicy, :ShortestDistancePolicy => ShortestDistancePolicy)
