@@ -1,20 +1,5 @@
 
-abstract type GhostPolicy end
-
-struct RandomGhostPolicy <: GhostPolicy
-    a::Int
-    function RandomGhostPolicy()
-        new(1)
-    end
-end
-
-# struct DeterministicRoutePolicy{GhostPolicy}
-
-# end
-
-# struct ShortestDistancePolicy{GhostPolicy}
-
-# end
+include("ghost_policies.jl")
 
 mutable struct Pacman
 
@@ -22,7 +7,7 @@ mutable struct Pacman
     xp::Int # location of pacman on square board
     ng::Int # number of ghosts on board
     xg::Vector{Int} # array of locations of ghosts on board
-    pg::Vector{GhostPolicy} # array of the ghost policies
+    pg::Vector{<:GhostPolicy} # array of the ghost policies
     squares::BitArray{2} # array of actions and squares (have values 0-15 for each square, with a bit describing if an action is available in NESW order, LSB is W, bit 3 is N)
     pellets::BitArray{} # bitmask of the locations of the pellets
     power_pellets::BitArray{} # bitmask of the locations of the power pellets that make the ghosts edible
