@@ -77,6 +77,10 @@ mutable struct Pacman
 
 end
 
+function update_ghost!(pacman::Pacman, g::Int)
+    action = ghost_action(pacman.xp, pacman.xg[g], pacman.pg[g])
+end
+
 
 function generate_squares(game_size::Int, available_squares::Array{Int})
     max_square = game_size^2
