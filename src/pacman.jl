@@ -7,6 +7,7 @@ struct PacmanGameState
     pellets::BitArray{}
     power_pellets::BitArray{}
     power::Bool
+    power_count::Int
     score::Int
     game_over::Bool
     win::Bool
@@ -16,11 +17,12 @@ struct PacmanGameState
         pellets::BitArray{},
         power_pellets::BitArray{},
         power::Bool,
+        power_count::Int,
         score::Int,
         game_over::Bool,
         win::Bool,
     )
-        new(xp, xg, pellets, power_pellets, power, score, game_over, win)
+        new(xp, xg, pellets, power_pellets, power, power_count, score, game_over, win)
     end
 end
 
@@ -96,7 +98,7 @@ mutable struct Pacman
 
 
         game_state =
-            PacmanGameState(xp, xg, pellets, power_pellets, power, score, game_over, win)
+            PacmanGameState(xp, xg, pellets, power_pellets, power, power_count, score, game_over, win)
         game_history = [game_state]
 
         new(
@@ -195,6 +197,7 @@ function update_pacman!(pacman::Pacman, action::Int)
         pacman.pellets,
         pacman.power_pellets,
         pacman.power,
+        pacman.power_count,
         pacman.score,
         pacman.game_over,
         pacman.win,
