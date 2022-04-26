@@ -27,3 +27,17 @@ pacman = Pacman(
     power_count = power_count,
     power_limit = power_limit,
 )
+
+
+using GLMakie
+using LaTeXStrings
+
+f = Figure(fontsize = 18)
+
+Axis(f[1, 1],
+    title = L"\frac{x + y}{\sin(k^2)}",
+    xlabel = L"\sum_a^b{xy}",
+    ylabel = L"\sqrt{\frac{a}{b}}"
+)
+
+f
