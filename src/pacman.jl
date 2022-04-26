@@ -1,6 +1,30 @@
 
 include("ghost_policies.jl")
 
+struct PacmanGameState
+    xp::Int
+    xg::Vector{Int}
+    pellets::BitArray{}
+    power_pellets::BitArray{}
+    power::Bool
+    score::Int
+    game_over::Bool
+    win::Bool
+    function PacmanGameState(
+        xp::Int,
+        xg::Vector{Int},
+        pellets::BitArray{},
+        power_pellets::BitArray{},
+        power::Bool,
+        score::Int,
+        game_over::Bool,
+        win::Bool,
+    )
+        new(xp, xg, pellets, power_pellets, power, score, game_over, win)
+    end
+end
+
+
 mutable struct Pacman
 
     game_size::Int # dimension of square board 
@@ -18,6 +42,7 @@ mutable struct Pacman
     score::Int # + 1 for every pellet, + 5 for every ghost
     game_over::Bool # false if pacman hasn't been eaten, true if pacman has been eaten or pacman has reached all pellets
     win::Bool # true if pacman has reached all pellets, false otherwise
+    game_history::Vector{PacmanGameState} # stores game history
 
     function Pacman(;
         game_size::Int = 3,
@@ -32,6 +57,7 @@ mutable struct Pacman
         power_limit::Int = 5,
         score::Int = 0,
         game_over::Bool = false,
+        win::Bool = false,
     )
 
         unique!(available_squares)
@@ -67,6 +93,12 @@ mutable struct Pacman
         power_pellets = BitArray{}(undef, n_squares)
         power_pellets[available_power_pellets] .= true
 
+
+
+        game_state =
+            PacmanGameState(xp, xg, pellets, power_pellets, power, score, game_over, win)
+        game_history = [game_state]
+
         new(
             game_size,
             xp,
@@ -82,6 +114,8 @@ mutable struct Pacman
             power_limit,
             score,
             game_over,
+            win,
+            game_history,
         )
     end
 
@@ -96,7 +130,7 @@ end
 
 function update_pacman!(pacman::Pacman, action::Int)
 
-    if action in pacman.actions
+    if action in pacman.actions[pacman.squares[pacman.xp, :]]
         pacman.xp += action
     else
         throw(DomainError(xg, "Action not in available actions."))
@@ -155,6 +189,19 @@ function update_pacman!(pacman::Pacman, action::Int)
         pacman.power = false
     end
 
+    new_game_state = PacmanGameState(
+        pacman.xp,
+        pacman.xg,
+        pacman.pellets,
+        pacman.power_pellets,
+        pacman.power,
+        pacman.score,
+        pacman.game_over,
+        pacman.win,
+    )
+    push!(pacman.game_history, new_game_state)
+
+    return new_game_state
 end
 
 

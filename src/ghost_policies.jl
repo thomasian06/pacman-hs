@@ -13,7 +13,7 @@ function bfs_map(squares::BitArray{2}, xi::Int)
     ns, na = size(squares)
     jump = Int(sqrt(ns))
     actions = Vector{Int}([jump, 1, -jump, -1])
-    available_squares = findall(sum(squares, dims=2)[:] .> 0)
+    available_squares = findall(sum(squares, dims = 2)[:] .> 0)
     visited = BitArray{}(undef, size(available_squares))
     best_action_to_squares = zeros(Int, size(available_squares))
     current = xi
@@ -35,7 +35,8 @@ function bfs_map(squares::BitArray{2}, xi::Int)
             neighbor = current + action
             if !visited[sq2i(neighbor, available_squares)]
                 visited[sq2i(neighbor, available_squares)] = true
-                best_action_to_squares[sq2i(neighbor, available_squares)] = best_action_to_squares[sq2i(current, available_squares)]
+                best_action_to_squares[sq2i(neighbor, available_squares)] =
+                    best_action_to_squares[sq2i(current, available_squares)]
                 enqueue!(q, neighbor)
             end
         end
@@ -78,10 +79,10 @@ end
 struct ShortestDistancePolicy <: GhostPolicy
     squares::BitArray{2}
     actions::Vector{Int}
-    action_map::Array{Int, 2}
+    action_map::Array{Int,2}
     available_squares::Vector{Int}
     function ShortestDistancePolicy(squares::BitArray{2}, actions::Vector{Int})
-        available_squares = findall(sum(squares, dims=2)[:] .> 0)
+        available_squares = findall(sum(squares, dims = 2)[:] .> 0)
         ns = length(available_squares)
         action_map = zeros(Int, (ns, ns))
         for square in available_squares
@@ -92,7 +93,10 @@ struct ShortestDistancePolicy <: GhostPolicy
 end
 
 function ghost_action(xp::Int, xg::Int, policy::ShortestDistancePolicy)
-    return policy.action_map[sq2i(xg, policy.available_squares), sq2i(xp, policy.available_squares)]
+    return policy.action_map[
+        sq2i(xg, policy.available_squares),
+        sq2i(xp, policy.available_squares),
+    ]
 end
 
 
