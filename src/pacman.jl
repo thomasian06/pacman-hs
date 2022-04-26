@@ -129,6 +129,7 @@ function update_pacman!(pacman::Pacman, action::Int)
         pacman.win = false
     end
 
+    # update ghosts
     for g = 1:pacman.ng
         update_ghost!(pacman, g)
     end
@@ -148,6 +149,7 @@ function update_pacman!(pacman::Pacman, action::Int)
         pacman.win = false
     end
 
+    # check power count against power limit
     if pacman.power_count > pacman.power_limit
         pacman.power_count = 0
         pacman.power = false
