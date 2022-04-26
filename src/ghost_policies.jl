@@ -20,7 +20,6 @@ function bfs_map(squares::BitArray{2}, xi::Int)
 
     q = Queue{Int}()
 
-    println(sq2i(current, available_squares))
     visited[sq2i(current, available_squares)] = true
     available_actions = actions[squares[current, :]]
     for action in available_actions
@@ -76,13 +75,22 @@ function ghost_action(xp::Int, xg::Int, policy::DeterministicRoutePolicy, square
 end
 
 struct ShortestDistancePolicy <: GhostPolicy
-    a::Int
+    action_map::Array{Int, 2}
+    available_squares::Vector{Int}
     function ShortestDistancePolicy(squares::BitArray{2})
-        new(1)
+        available_squares = findall(sum(squares, dims=2)[:] .> 0)
+        ns = length(available_squares)
+        action_map = zeros(Int, (ns, ns))
+        for square in available_squares
+            action_map[sq2i(square, available_squares), :] = bfs_map(squares, square)
+        end
+        new(action_map, available_squares)
     end
 end
 
-
+function ghost_action(xp::Int, xg::Int, policy::ShortestDistancePolicy, squares::BitArray{2})
+    return policy.action_map[sq2i(xg, policy.available_squares), sq2i(xp, policy.available_squares)]
+end
 
 
 available_policies =
