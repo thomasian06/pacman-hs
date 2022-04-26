@@ -29,15 +29,15 @@ pacman = Pacman(
 )
 
 
-using GLMakie
-using LaTeXStrings
+# using GLMakie
+# using LaTeXStrings
 
-f = Figure(fontsize = 18)
+# f = Figure(fontsize = 18)
 
-Axis(f[1, 1],
-    title = L"\frac{x + y}{\sin(k^2)}",
-    xlabel = L"\sum_a^b{xy}",
-    ylabel = L"\sqrt{\frac{a}{b}}"
-)
+# Axis(f[1, 1],
+#     title = L"\frac{x + y}{\sin(k^2)}",
+#     xlabel = L"\sum_a^b{xy}",
+#     ylabel = L"\sqrt{\frac{a}{b}}"
+# )
 
-f
+# f
