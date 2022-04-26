@@ -82,6 +82,7 @@ end
 
 function update_ghost!(pacman::Pacman, g::Int)
     action = ghost_action(pacman.xp, pacman.xg[g], pacman.pg[g])
+    pacman.xg[g] += action
     return action
 end
 
