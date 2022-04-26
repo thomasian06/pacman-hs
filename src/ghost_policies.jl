@@ -51,44 +51,47 @@ end
 abstract type GhostPolicy end
 
 struct RandomGhostPolicy <: GhostPolicy
-    function RandomGhostPolicy()
-        new()
-    end
-    function RandomGhostPolicy(squares::BitArray{2})
-        new()
+    squares::BitArray{2}
+    actions::Vector{Int}
+    function RandomGhostPolicy(squares::BitArray{2}, actions::Vector{Int})
+        new(squares, actions)
     end
 end
 
-function ghost_action(xp::Int, xg::Int, policy::RandomGhostPolicy, squares::BitArray{2})
-    return rand(findall(squares[xg, :]))
+function ghost_action(xp::Int, xg::Int, policy::RandomGhostPolicy)
+    return policy.actions[rand(findall(policy.squares[xg, :]))]
 end
 
 struct DeterministicRoutePolicy <: GhostPolicy
+    squares::BitArray{2}
+    actions::Vector{Int}
     route::Vector{Int}
-    function DeterministicRoutePolicy(squares::BitArray{2})
+    function DeterministicRoutePolicy(squares::BitArray{2}, actions::Vector{Int})
         new([1])
     end
 end
 
-function ghost_action(xp::Int, xg::Int, policy::DeterministicRoutePolicy, squares::BitArray{2})
+function ghost_action(xp::Int, xg::Int, policy::DeterministicRoutePolicy)
     return policy.route[xg]
 end
 
 struct ShortestDistancePolicy <: GhostPolicy
+    squares::BitArray{2}
+    actions::Vector{Int}
     action_map::Array{Int, 2}
     available_squares::Vector{Int}
-    function ShortestDistancePolicy(squares::BitArray{2})
+    function ShortestDistancePolicy(squares::BitArray{2}, actions::Vector{Int})
         available_squares = findall(sum(squares, dims=2)[:] .> 0)
         ns = length(available_squares)
         action_map = zeros(Int, (ns, ns))
         for square in available_squares
             action_map[sq2i(square, available_squares), :] = bfs_map(squares, square)
         end
-        new(action_map, available_squares)
+        new(squares, actions, action_map, available_squares)
     end
 end
 
-function ghost_action(xp::Int, xg::Int, policy::ShortestDistancePolicy, squares::BitArray{2})
+function ghost_action(xp::Int, xg::Int, policy::ShortestDistancePolicy)
     return policy.action_map[sq2i(xg, policy.available_squares), sq2i(xp, policy.available_squares)]
 end
 

@@ -9,6 +9,7 @@ mutable struct Pacman
     xg::Vector{Int} # array of locations of ghosts on board
     pg::Vector{<:GhostPolicy} # array of the ghost policies
     squares::BitArray{2} # array of actions and squares (have values 0-15 for each square, with a bit describing if an action is available in NESW order, LSB is W, bit 3 is N)
+    actions::Vector{Int}
     pellets::BitArray{} # bitmask of the locations of the pellets
     power_pellets::BitArray{} # bitmask of the locations of the power pellets that make the ghosts edible
     power::Bool # if true, pacman can eat the ghosts
@@ -33,6 +34,7 @@ mutable struct Pacman
         unique!(available_power_pellets)
 
         squares = generate_squares(game_size, available_squares)
+        actions = Vector{Int}([game_size, 1, -game_size, -1])
         if xp ∉ available_squares
             throw(DomainError(xp, "Pacman isn't in list of available squares."))
         end
@@ -50,7 +52,7 @@ mutable struct Pacman
 
         ng = length(xg)
 
-        pg = [policy_map[s](squares) for s in pg_types]
+        pg = [policy_map[s](squares, actions) for s in pg_types]
 
         n_squares = game_size^2
 
@@ -67,6 +69,7 @@ mutable struct Pacman
             xg,
             pg,
             squares,
+            actions,
             pellets,
             power_pellets,
             power,
@@ -79,6 +82,7 @@ end
 
 function update_ghost!(pacman::Pacman, g::Int)
     action = ghost_action(pacman.xp, pacman.xg[g], pacman.pg[g])
+    return action
 end
 
 
