@@ -6,7 +6,8 @@ import FromFile: @from
 # game_size = 3
 # available_squares = [1, 2, 3, 4, 6, 7, 8, 9]
 game_size = 5
-available_squares = [1, 2, 3, 4, 5, 6, 8, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 23, 24, 25]
+available_squares =
+    [1, 2, 3, 4, 5, 6, 8, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 23, 24, 25]
 
 
 xp = 1
@@ -37,9 +38,9 @@ pg = pacman.pg
 game_state = pacman.game_state
 actions = pacman.actions
 
-pacman_transition = PacmanTransition()
+pacman_transition = PacmanTransition(pg, squares, actions)
 
-expand_from_initial_state!(pacman_transition, game_state, pg, squares, actions)
+expand_from_initial_state!(pacman_transition, game_state)
 
 @time for xp in available_squares
     pacman = Pacman(
@@ -51,7 +52,7 @@ expand_from_initial_state!(pacman_transition, game_state, pg, squares, actions)
         available_pellets = available_pellets,
     )
     game_state = pacman.game_state
-    expand_from_initial_state!(pacman_transition, game_state, pg, squares, actions)
+    expand_from_initial_state!(pacman_transition, game_state)
 end
 
 ##

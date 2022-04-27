@@ -9,20 +9,46 @@ import FromFile: @from
 @from "ghost_policies.jl" import GhostPolicies: GhostPolicy, ghost_action
 
 mutable struct PacmanTransition
+    pg::Vector{<:GhostPolicy}
+    squares::BitArray{2}
+    actions::Vector{Int}
+    game_mode_pellets::Bool
     vertex_data::Vector{PacmanGameState}
     edge_data::Vector{Int}
     initial_states::Vector{Int}
     unsafe_states::Vector{Int}
     accepting_states::Vector{Int}
+    deterministic::Bool
     g::SimpleDiGraph
-    function PacmanTransition()
+    function PacmanTransition(
+        pg::Vector{<:GhostPolicy},
+        squares::BitArray{2},
+        actions::Vector{Int};
+        game_mode_pellets::Bool = false,
+    )
         vertex_data = Vector{PacmanGameState}()
         edge_data = Vector{Int}()
         initial_states = Vector{Int}()
         unsafe_states = Vector{Int}()
         accepting_states = Vector{Int}()
+        deterministic = true
+        for p in pg
+            p.deterministic ? continue : (deterministic = false; break)
+        end
         g = SimpleDiGraph()
-        new(vertex_data, edge_data, initial_states, unsafe_states, accepting_states, g)
+        new(
+            pg,
+            squares,
+            actions,
+            game_mode_pellets,
+            vertex_data,
+            edge_data,
+            initial_states,
+            unsafe_states,
+            accepting_states,
+            deterministic,
+            g,
+        )
     end
 end
 
@@ -50,9 +76,6 @@ end
 function expand_from_state!(
     pacman_transition::PacmanTransition,
     game_state::PacmanGameState,
-    pg::Vector{<:GhostPolicy},
-    squares::BitArray{2},
-    actions::Vector{Int},
 )
     state_ind = findindex(game_state, pacman_transition.vertex_data)
     if state_ind > 0
@@ -66,10 +89,11 @@ function expand_from_state!(
     else
         push!(pacman_transition.accepting_states, state_ind)
     end
-    available_actions = actions[squares[game_state.xp, :]]
+    available_actions = pacman_transition.actions[pacman_transition.squares[game_state.xp, :]]
     @inbounds for action in available_actions
-        new_game_state = update_game_state(game_state, action, pg)
-        new_state_ind = expand_from_state!(pacman_transition, new_game_state, pg, squares, actions)
+        new_game_state = update_game_state(game_state, action, pacman_transition.pg)
+        new_state_ind =
+            expand_from_state!(pacman_transition, new_game_state)
         add_edge!(pacman_transition, state_ind, new_state_ind, action)
     end
     return state_ind
@@ -78,14 +102,11 @@ end
 function expand_from_initial_state!(
     pacman_transition::PacmanTransition,
     game_state::PacmanGameState,
-    pg::Vector{<:GhostPolicy},
-    squares::BitArray{2},
-    actions::Vector{Int};
-    game_mode_pellets::Bool = false,
 )
     initial_state_ind = findindex(game_state, pacman_transition.vertex_data)
     if initial_state_ind == 0
-        initial_state_ind = expand_from_state!(pacman_transition, game_state, pg, squares, actions)
+        initial_state_ind =
+            expand_from_state!(pacman_transition, game_state)
     end
     if initial_state_ind ∉ pacman_transition.initial_states
         push!(pacman_transition.initial_states, initial_state_ind)

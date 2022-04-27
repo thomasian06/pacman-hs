@@ -50,7 +50,7 @@ function compare_game_states(
            a.score == b.score &&
            all(a.xg .== b.xg) &&
            all(a.pellets .== b.pellets) &&
-            return true
+           return true
         else
             return false
         end
@@ -132,14 +132,7 @@ mutable struct Pacman
             game_over = true
         end
 
-        game_state = PacmanGameState(
-            xp,
-            xg,
-            game_over,
-            pellets,
-            score,
-            win,
-        )
+        game_state = PacmanGameState(xp, xg, game_over, pellets, score, win)
         game_history = [game_state]
 
         new(
@@ -204,14 +197,7 @@ function update_game_state(
         game_over = true
     end
 
-    new_game_state = PacmanGameState(
-        xp,
-        xg,
-        game_over,
-        pellets,
-        score,
-        win,
-    )
+    new_game_state = PacmanGameState(xp, xg, game_over, pellets, score, win)
 
     return new_game_state
 end

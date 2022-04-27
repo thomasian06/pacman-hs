@@ -64,8 +64,9 @@ abstract type GhostPolicy end
 struct RandomGhostPolicy <: GhostPolicy
     squares::BitArray{2}
     actions::Vector{Int}
+    deterministic::Bool
     function RandomGhostPolicy(squares::BitArray{2}, actions::Vector{Int})
-        new(squares, actions)
+        new(squares, actions, false)
     end
 end
 
@@ -77,8 +78,9 @@ struct DeterministicRoutePolicy <: GhostPolicy
     squares::BitArray{2}
     actions::Vector{Int}
     route::Vector{Int}
+    deterministic::Bool
     function DeterministicRoutePolicy(squares::BitArray{2}, actions::Vector{Int})
-        new([1])
+        new([1], [1], [1], true)
     end
 end
 
@@ -91,6 +93,7 @@ struct ShortestDistancePolicy <: GhostPolicy
     actions::Vector{Int}
     action_map::Array{Int,2}
     available_squares::Vector{Int}
+    deterministic::Bool
     function ShortestDistancePolicy(squares::BitArray{2}, actions::Vector{Int})
         available_squares = findall(sum(squares, dims = 2)[:] .> 0)
         ns = length(available_squares)
@@ -98,7 +101,7 @@ struct ShortestDistancePolicy <: GhostPolicy
         for square in available_squares
             action_map[sq2i(square, available_squares), :] = bfs_map(squares, square)
         end
-        new(squares, actions, action_map, available_squares)
+        new(squares, actions, action_map, available_squares, true)
     end
 end
 
