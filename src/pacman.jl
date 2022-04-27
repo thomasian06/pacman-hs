@@ -1,7 +1,7 @@
 
 module Pacmen
 
-export Pacman, PacmanGameState, update_game_state, update_pacman!
+export Pacman, PacmanGameState, update_game_state, update_pacman!, findindex
 
 import FromFile: @from
 @from "ghost_policies.jl" using GhostPolicies
@@ -38,6 +38,50 @@ struct PacmanGameState
     end
 end
 
+function compare_game_states(
+    a::PacmanGameState,
+    b::PacmanGameState,
+    game_mode_pellets::Bool = false,
+)
+    if !game_mode_pellets
+        if a.xp == b.xp && a.game_over == b.game_over && all(a.xg .== b.xg)
+            return true
+        else
+            return false
+        end
+    else
+        if a.xp == b.xp &&
+           a.game_over == b.game_over &&
+           a.win == b.win &&
+           a.score == b.score &&
+           a.power_count == b.power_count &&
+           a.power == b.power &&
+           all(a.xg .== b.xg) &&
+           all(a.pellets .== b.pellets) &&
+           all(a.power_pellets .== b.power_pellets)
+            return true
+        else
+            return false
+        end
+    end
+    return false
+end
+
+Base.:(==)(a::PacmanGameState, b::PacmanGameState) = compare_game_states(a, b)
+
+function Base.in(a::PacmanGameState, A::Vector{PacmanGameState})
+    @inbounds for ap in A
+        ap == a ? (return true) : continue
+    end
+    return false
+end
+
+function findindex(a::PacmanGameState, A::Vector{PacmanGameState})
+    @inbounds for (i, ap) in enumerate(A)
+        ap == a ? (return i) : continue
+    end
+    return 0
+end
 
 mutable struct Pacman
 
