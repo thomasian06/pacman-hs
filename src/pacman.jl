@@ -237,7 +237,6 @@ function update_game_state(
         score,
         win,
     )
-    push!(pacman.game_history, new_game_state)
 
     return new_game_state
 end

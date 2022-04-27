@@ -33,5 +33,19 @@ pacman = Pacman(
 )
 
 
+
+function n_game_states(n::Int, pacman::Pacman, action::Int=3)
+    for i = 1:n
+        update_game_state(
+            pacman.game_state,
+            action,
+            pacman.pg
+        )
+    end
+end
+
 ##
 
+
+##
+pacman.pg
