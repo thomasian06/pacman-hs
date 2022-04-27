@@ -98,8 +98,17 @@ mutable struct Pacman
             win = false
         end
 
-        game_state =
-            PacmanGameState(xp, xg, game_over, pellets, power_pellets, power, power_count, score, win)
+        game_state = PacmanGameState(
+            xp,
+            xg,
+            game_over,
+            pellets,
+            power_pellets,
+            power,
+            power_count,
+            score,
+            win,
+        )
         game_history = [game_state]
 
         new(
@@ -117,7 +126,13 @@ mutable struct Pacman
 
 end
 
-function update_game_state(game_state::PacmanGameState, action::Int, pg::Vector{<:GhostPolicy}; game_mode_pellets::Bool = false, power_limit::Int = 0, )
+function update_game_state(
+    game_state::PacmanGameState,
+    action::Int,
+    pg::Vector{<:GhostPolicy};
+    game_mode_pellets::Bool = false,
+    power_limit::Int = 0,
+)
 
     xp = game_state.xp + action
     xg = copy(game_state.xg)
@@ -134,7 +149,7 @@ function update_game_state(game_state::PacmanGameState, action::Int, pg::Vector{
         end
 
         # update power pellets and power
-        
+
         power_pellets = copy(game_state.power_pellets)
         power = game_state.power
         power_count = game_state.power_count
@@ -219,7 +234,13 @@ function update_pacman!(pacman::Pacman, action::Int)
     if action ∉ pacman.actions[pacman.squares[pacman.game_state.xp, :]]
         throw(DomainError(xg, "Action not in available actions."))
     end
-    new_game_state = update_game_state(pacman.game_state, action, pacman.pg, game_mode_pellets = pacman.game_mode_pellets, power_limit = pacman.power_limit)
+    new_game_state = update_game_state(
+        pacman.game_state,
+        action,
+        pacman.pg,
+        game_mode_pellets = pacman.game_mode_pellets,
+        power_limit = pacman.power_limit,
+    )
     push!(pacman.game_history, new_game_state)
     pacman.game_state = deepcopy(new_game_state)
     # pacman.pg = copy(new_pg)
