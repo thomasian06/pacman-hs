@@ -18,9 +18,6 @@ struct PacmanGameState
     xg::Vector{Int}
     game_over::Bool
     pellets::BitArray{}
-    power_pellets::BitArray{}
-    power::Bool
-    power_count::Int
     score::Int
     win::Bool
     function PacmanGameState(
@@ -28,13 +25,10 @@ struct PacmanGameState
         xg::Vector{Int},
         game_over::Bool,
         pellets::BitArray{} = BitArray(0),
-        power_pellets::BitArray{} = BitArray(0),
-        power::Bool = false,
-        power_count::Int = nothing,
         score::Int = nothing,
         win::Bool = false,
     )
-        new(xp, xg, game_over, pellets, power_pellets, power, power_count, score, win)
+        new(xp, xg, game_over, pellets, score, win)
     end
 end
 
@@ -54,11 +48,8 @@ function compare_game_states(
            a.game_over == b.game_over &&
            a.win == b.win &&
            a.score == b.score &&
-           a.power_count == b.power_count &&
-           a.power == b.power &&
            all(a.xg .== b.xg) &&
            all(a.pellets .== b.pellets) &&
-           all(a.power_pellets .== b.power_pellets)
             return true
         else
             return false
@@ -91,7 +82,6 @@ mutable struct Pacman
     pg::Vector{<:GhostPolicy} # array of the ghost policies
     squares::BitArray{2} # array of actions and squares (have values 0-15 for each square, with a bit describing if an action is available in NESW order, LSB is W, bit 3 is N)
     actions::Vector{Int}
-    power_limit::Int # limit of how many turns pacman has the power
     game_history::Vector{PacmanGameState} # stores game history
     game_mode_pellets::Bool
 
@@ -102,10 +92,6 @@ mutable struct Pacman
         pg_types::Vector{Symbol} = [:RandomGhostPolicy],
         available_squares::Vector{Int} = [1, 2, 3, 4, 6, 7, 8, 9],
         available_pellets::Vector{},
-        available_power_pellets::Vector{},
-        power::Bool = false,
-        power_count::Int = 0,
-        power_limit::Int = 5,
         score::Int = 0,
         game_over::Bool = false,
         win::Bool = false,
@@ -114,7 +100,6 @@ mutable struct Pacman
 
         unique!(available_squares)
         unique!(available_pellets)
-        unique!(available_power_pellets)
 
         squares = generate_squares(game_size, available_squares)
         actions = Vector{Int}([game_size, 1, -game_size, -1])
@@ -127,11 +112,6 @@ mutable struct Pacman
         if !all(in(available_squares).(available_pellets))
             throw(DomainError(xg, "At least one Pellet isn't in an available square."))
         end
-        if !all(in(available_squares).(available_power_pellets))
-            throw(
-                DomainError(xg, "At least one Power Pellet isn't in an available square."),
-            )
-        end
 
         ng = length(xg)
 
@@ -142,16 +122,14 @@ mutable struct Pacman
         pellets = BitArray{}(undef, n_squares)
         pellets[available_pellets] .= true
 
-        power_pellets = BitArray{}(undef, n_squares)
-        power_pellets[available_power_pellets] .= true
-
         if !game_mode_pellets
             pellets = BitArray(0)
-            power_pellets = BitArray(0)
-            power = false
-            power_count = 0
             score = 0
             win = false
+        end
+
+        if xp in xg
+            game_over = true
         end
 
         game_state = PacmanGameState(
@@ -159,9 +137,6 @@ mutable struct Pacman
             xg,
             game_over,
             pellets,
-            power_pellets,
-            power,
-            power_count,
             score,
             win,
         )
@@ -174,7 +149,6 @@ mutable struct Pacman
             pg,
             squares,
             actions,
-            power_limit,
             game_history,
             game_mode_pellets,
         )
@@ -187,7 +161,6 @@ function update_game_state(
     action::Int,
     pg::Vector{<:GhostPolicy};
     game_mode_pellets::Bool = false,
-    power_limit::Int = 0,
 )
 
     xp = game_state.xp + action
@@ -203,37 +176,14 @@ function update_game_state(
             pellets[xp] = false
             score += 1
         end
-
-        # update power pellets and power
-
-        power_pellets = copy(game_state.power_pellets)
-        power = game_state.power
-        power_count = game_state.power_count
-        if power_pellets[xp]
-            power_pellets[xp] = false
-            power = true
-            power_count = 0
-        end
-
-        if power
-            power_count += 1
-            collision = xg .== xp
-            score += sum(collision) * 5
-            # ng -= sum(collision)
-            # deleteat!(xg, collision)
-            # deleteat!(pg, collision)
-        end
     else
         score = 0
-        power = false
-        power_count = 0
         pellets = BitArray(0)
-        power_pellets = BitArray(0)
     end
 
     game_over = game_state.game_over
     win = game_state.win
-    if xp in xg && !power
+    if xp in xg
         game_over = true
         win = false
     end
@@ -244,25 +194,9 @@ function update_game_state(
         xg[g] += action
     end
 
-    # check again if pacman is on top of any ghost
-    if power
-        power_count += 1
-        collision = xg .== xp
-        score += sum(collision) * 5
-        # ng -= sum(collision)
-        # deleteat!(xg, collision)
-        # deleteat!(pg, collision)
-    end
-
-    if xp in xg && !power
+    if xp in xg
         game_over = true
         win = false
-    end
-
-    # check power count against power limit
-    if power_count > power_limit
-        power_count = 0
-        power = false
     end
 
     if sum(pellets) == 0 && game_mode_pellets
@@ -275,9 +209,6 @@ function update_game_state(
         xg,
         game_over,
         pellets,
-        power_pellets,
-        power,
-        power_count,
         score,
         win,
     )
@@ -294,12 +225,9 @@ function update_pacman!(pacman::Pacman, action::Int)
         action,
         pacman.pg,
         game_mode_pellets = pacman.game_mode_pellets,
-        power_limit = pacman.power_limit,
     )
     push!(pacman.game_history, new_game_state)
     pacman.game_state = deepcopy(new_game_state)
-    # pacman.pg = copy(new_pg)
-    # pacman.ng = new_ng
     return new_game_state
 end
 
@@ -321,7 +249,7 @@ function generate_squares(game_size::Int, available_squares::Array{Int})
 
     actions = Array{Int}([game_size, 1, -game_size, -1])
 
-    squares = BitArray{2}(undef, max_square, 4)
+    squares = BitMatrix(zeros((max_square, 4)))
     for square in available_squares
 
         for (i, action) in enumerate(actions)

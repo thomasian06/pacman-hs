@@ -15,7 +15,7 @@ using DataStructures
 
 # utility function
 
-function sq2i(x::Int, available_squares::Vector{Int})
+@inline function sq2i(x::Int, available_squares::Vector{Int})
     return findall(available_squares .== x)[1]
 end
 

@@ -82,7 +82,6 @@ function expand_from_initial_state!(
     squares::BitArray{2},
     actions::Vector{Int};
     game_mode_pellets::Bool = false,
-    power_limit::Int = 0,
 )
     initial_state_ind = findindex(game_state, pacman_transition.vertex_data)
     if initial_state_ind == 0
