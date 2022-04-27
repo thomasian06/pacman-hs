@@ -89,6 +89,15 @@ mutable struct Pacman
         power_pellets = BitArray{}(undef, n_squares)
         power_pellets[available_power_pellets] .= true
 
+        if !game_mode_pellets
+            pellets = BitArray(0)
+            power_pellets = BitArray(0)
+            power = false
+            power_count = 0
+            score = 0
+            win = false
+        end
+
         game_state =
             PacmanGameState(xp, xg, game_over, pellets, power_pellets, power, power_count, score, win)
         game_history = [game_state]
