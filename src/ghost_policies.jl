@@ -1,4 +1,16 @@
 
+module GhostPolicies
+
+export sq2i,
+    bfs_map,
+    GhostPolicy,
+    RandomGhostPolicy,
+    DeterministicRoutePolicy,
+    ShortestDistancePolicy,
+    available_policies,
+    policy_map,
+    ghost_action
+
 using DataStructures
 
 # utility function
@@ -44,8 +56,6 @@ function bfs_map(squares::BitArray{2}, xi::Int)
 
     return best_action_to_squares
 end
-
-
 
 
 # Define Policies
@@ -107,3 +117,6 @@ policy_map = Dict{Symbol,Any}(
     :DeterministicRoutePolicy => DeterministicRoutePolicy,
     :ShortestDistancePolicy => ShortestDistancePolicy,
 )
+
+
+end

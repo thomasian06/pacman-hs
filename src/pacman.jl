@@ -1,5 +1,13 @@
 
-include("ghost_policies.jl")
+module Pacmen
+
+export Pacman, PacmanGameState, update_game_state, update_pacman!
+
+import FromFile: @from
+@from "ghost_policies.jl" using GhostPolicies
+
+# include("ghost_policies.jl")
+
 
 struct PacmanGameState
     xp::Int
@@ -291,4 +299,6 @@ function generate_squares(game_size::Int, available_squares::Array{Int})
     end
 
     return squares
+end
+
 end
