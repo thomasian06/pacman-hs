@@ -89,11 +89,11 @@ function expand_from_state!(
     else
         push!(pacman_transition.accepting_states, state_ind)
     end
-    available_actions = pacman_transition.actions[pacman_transition.squares[game_state.xp, :]]
+    available_actions =
+        pacman_transition.actions[pacman_transition.squares[game_state.xp, :]]
     @inbounds for action in available_actions
         new_game_state = update_game_state(game_state, action, pacman_transition.pg)
-        new_state_ind =
-            expand_from_state!(pacman_transition, new_game_state)
+        new_state_ind = expand_from_state!(pacman_transition, new_game_state)
         add_edge!(pacman_transition, state_ind, new_state_ind, action)
     end
     return state_ind
@@ -105,8 +105,7 @@ function expand_from_initial_state!(
 )
     initial_state_ind = findindex(game_state, pacman_transition.vertex_data)
     if initial_state_ind == 0
-        initial_state_ind =
-            expand_from_state!(pacman_transition, game_state)
+        initial_state_ind = expand_from_state!(pacman_transition, game_state)
     end
     if initial_state_ind ∉ pacman_transition.initial_states
         push!(pacman_transition.initial_states, initial_state_ind)
