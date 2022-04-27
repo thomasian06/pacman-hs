@@ -6,8 +6,12 @@ export Pacman, PacmanGameState, update_game_state, update_pacman!
 import FromFile: @from
 @from "ghost_policies.jl" using GhostPolicies
 
-# include("ghost_policies.jl")
-
+export ghost_action,
+    available_policies,
+    policy_map,
+    RandomGhostPolicy,
+    DeterministicRoutePolicy,
+    ShortestDistancePolicy
 
 struct PacmanGameState
     xp::Int
