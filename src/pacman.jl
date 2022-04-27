@@ -148,9 +148,9 @@ function update_game_state(game_state::PacmanGameState, action::Int, pg::Vector{
             power_count += 1
             collision = xg .== xp
             score += sum(collision) * 5
-            ng -= sum(collision)
-            deleteat!(xg, collision)
-            deleteat!(pg, collision)
+            # ng -= sum(collision)
+            # deleteat!(xg, collision)
+            # deleteat!(pg, collision)
         end
     else
         score = 0
@@ -178,9 +178,9 @@ function update_game_state(game_state::PacmanGameState, action::Int, pg::Vector{
         power_count += 1
         collision = xg .== xp
         score += sum(collision) * 5
-        ng -= sum(collision)
-        deleteat!(xg, collision)
-        deleteat!(pg, collision)
+        # ng -= sum(collision)
+        # deleteat!(xg, collision)
+        # deleteat!(pg, collision)
     end
 
     if xp in xg && !power
@@ -212,18 +212,18 @@ function update_game_state(game_state::PacmanGameState, action::Int, pg::Vector{
     )
     push!(pacman.game_history, new_game_state)
 
-    return new_game_state, pg, ng
+    return new_game_state
 end
 
 function update_pacman!(pacman::Pacman, action::Int)
     if action ∉ pacman.actions[pacman.squares[pacman.game_state.xp, :]]
         throw(DomainError(xg, "Action not in available actions."))
     end
-    new_game_state, new_pg, new_ng = update_game_state(pacman.game_state, action, pacman.pg, game_mode_pellets = pacman.game_mode_pellets, power_limit = pacman.power_limit)
+    new_game_state = update_game_state(pacman.game_state, action, pacman.pg, game_mode_pellets = pacman.game_mode_pellets, power_limit = pacman.power_limit)
     push!(pacman.game_history, new_game_state)
     pacman.game_state = deepcopy(new_game_state)
-    pacman.pg = copy(new_pg)
-    pacman.ng = new_ng
+    # pacman.pg = copy(new_pg)
+    # pacman.ng = new_ng
     return new_game_state
 end
 
