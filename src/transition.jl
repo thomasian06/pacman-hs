@@ -114,16 +114,3 @@ function expand_from_initial_state!(
 end
 
 end # module PacmanTransitions end
-
-##
-
-# pacman_trans = SimpleDiGraph()
-
-# add_vertex!(pacman_trans)
-# add_vertices!(pacman_trans, 15)
-# add_edge!(pacman_trans, 1, 2)
-
-# vertices(pacman_trans)
-# edges(pacman_trans)
-
-# outneighbors(pacman_trans, 1)
