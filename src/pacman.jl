@@ -29,21 +29,13 @@ end
 
 mutable struct Pacman
 
+    game_state::PacmanGameState
     game_size::Int # dimension of square board 
-    xp::Int # location of pacman on square board
     ng::Int # number of ghosts on board
-    xg::Vector{Int} # array of locations of ghosts on board
     pg::Vector{<:GhostPolicy} # array of the ghost policies
     squares::BitArray{2} # array of actions and squares (have values 0-15 for each square, with a bit describing if an action is available in NESW order, LSB is W, bit 3 is N)
     actions::Vector{Int}
-    pellets::BitArray{} # bitmask of the locations of the pellets
-    power_pellets::BitArray{} # bitmask of the locations of the power pellets that make the ghosts edible
-    power::Bool # if true, pacman can eat the ghosts
-    power_count::Int # counter of how many turns pacman has had the power
     power_limit::Int # limit of how many turns pacman has the power
-    score::Int # + 1 for every pellet, + 5 for every ghost
-    game_over::Bool # false if pacman hasn't been eaten, true if pacman has been eaten or pacman has reached all pellets
-    win::Bool # true if pacman has reached all pellets, false otherwise
     game_history::Vector{PacmanGameState} # stores game history
     game_mode_pellets::Bool
 
@@ -102,21 +94,13 @@ mutable struct Pacman
         game_history = [game_state]
 
         new(
+            game_state,
             game_size,
-            xp,
             ng,
-            xg,
             pg,
             squares,
             actions,
-            pellets,
-            power_pellets,
-            power,
-            power_count,
             power_limit,
-            score,
-            game_over,
-            win,
             game_history,
             game_mode_pellets,
         )
@@ -124,183 +108,113 @@ mutable struct Pacman
 
 end
 
-function update_ghost!(pacman::Pacman, g::Int)
-    action = ghost_action(pacman.xp, pacman.xg[g], pacman.pg[g])
-    pacman.xg[g] += action
-    return action
-end
+function update_game_state(game_state::PacmanGameState, action::Int, pg::Vector{<:GhostPolicy}; game_mode_pellets::Bool = false, power_limit::Int = 0, )
 
+    xp = game_state.xp + action
+    xg = copy(game_state.xg)
+
+    ng = length(pg)
+
+    if game_mode_pellets
+        # make updates to pacman board based on new pacman location
+        pellets = copy(game_state.pellets)
+        score = copy(game_state.score)
+        if pellets[xp]
+            pellets[xp] = false
+            score += 1
+        end
+
+        # update power pellets and power
+        
+        power_pellets = copy(game_state.power_pellets)
+        power = game_state.power
+        power_count = game_state.power_count
+        if power_pellets[xp]
+            power_pellets[xp] = false
+            power = true
+            power_count = 0
+        end
+
+        if power
+            power_count += 1
+            collision = xg .== xp
+            score += sum(collision) * 5
+            ng -= sum(collision)
+            deleteat!(xg, collision)
+            deleteat!(pg, collision)
+        end
+    else
+        score = 0
+        power = false
+        power_count = 0
+        pellets = BitArray(0)
+        power_pellets = BitArray(0)
+    end
+
+    game_over = game_state.game_over
+    win = game_state.win
+    if xp in xg && !power
+        game_over = true
+        win = false
+    end
+
+    # update ghosts
+    for g = 1:ng
+        action = ghost_action(xp, xg[g], pg[g])
+        xg[g] += action
+    end
+
+    # check again if pacman is on top of any ghost
+    if power
+        power_count += 1
+        collision = xg .== xp
+        score += sum(collision) * 5
+        ng -= sum(collision)
+        deleteat!(xg, collision)
+        deleteat!(pg, collision)
+    end
+
+    if xp in xg && !power
+        game_over = true
+        win = false
+    end
+
+    # check power count against power limit
+    if power_count > power_limit
+        power_count = 0
+        power = false
+    end
+
+    if sum(pellets) == 0 && game_mode_pellets
+        win = true
+        game_over = true
+    end
+
+    new_game_state = PacmanGameState(
+        xp,
+        xg,
+        game_over,
+        pellets,
+        power_pellets,
+        power,
+        power_count,
+        score,
+        win,
+    )
+    push!(pacman.game_history, new_game_state)
+
+    return new_game_state, pg, ng
+end
 
 function update_pacman!(pacman::Pacman, action::Int)
-
-    if pacman.game_over
-        return nothing
-    end
-
-    if action in pacman.actions[pacman.squares[pacman.xp, :]]
-        pacman.xp += action
-    else
+    if action ∉ pacman.actions[pacman.squares[pacman.game_state.xp, :]]
         throw(DomainError(xg, "Action not in available actions."))
     end
-
-    # make updates to pacman board based on new pacman location
-    if pacman.pellets[xp]
-        pacman.pellets[xp] = false
-        pacman.score += 1
-    end
-
-    # update power pellets and power
-    if pacman.power_pellets[xp]
-        pacman.power_pellets[xp] = false
-        pacman.power = true
-        pacman.power_count = 0
-    end
-
-    if pacman.power
-        pacman.power_count += 1
-        collision = pacman.xg .== pacman.xp
-        pacman.score += sum(collision) * 5
-        pacman.ng -= sum(collision)
-        deleteat!(pacman.xg, collision)
-        deleteat!(pacman.pg, collision)
-    end
-
-    if pacman.xp in pacman.xg && !pacman.power
-        pacman.game_over = true
-        pacman.win = false
-    end
-
-    # update ghosts
-    for g = 1:pacman.ng
-        update_ghost!(pacman, g)
-    end
-
-    # check again if pacman is on top of any ghost
-    if pacman.power
-        pacman.power_count += 1
-        collision = pacman.xg .== pacman.xp
-        pacman.score += sum(collision) * 5
-        pacman.ng -= sum(collision)
-        deleteat!(pacman.xg, collision)
-        deleteat!(pacman.pg, collision)
-    end
-
-    if pacman.xp in pacman.xg && !pacman.power
-        pacman.game_over = true
-        pacman.win = false
-    end
-
-    # check power count against power limit
-    if pacman.power_count > pacman.power_limit
-        pacman.power_count = 0
-        pacman.power = false
-    end
-
-    if sum(pacman.pellets) == 0 && pacman.game_mode_pellets
-        pacman.win = true
-        pacman.game_over = true
-    end
-
-    new_game_state = PacmanGameState(
-        pacman.xp,
-        pacman.xg,
-        pacman.game_over,
-        pacman.pellets,
-        pacman.power_pellets,
-        pacman.power,
-        pacman.power_count,
-        pacman.score,
-        pacman.win,
-    )
+    new_game_state, new_pg, new_ng = update_game_state(pacman.game_state, action, pacman.pg, game_mode_pellets = pacman.game_mode_pellets, power_limit = pacman.power_limit)
     push!(pacman.game_history, new_game_state)
-
-    return new_game_state
-end
-
-function update_game_state(game_state::PacmanGameState, action::Int, pg::Vector{<:GhostPolicy}, squares::BitArray{2}; game_mode_pellets::Bool = false, power_limit::Int = 0, )
-
-    # if action in pacman.actions[pacman.squares[pacman.xp, :]]
-    #     pacman.xp += action
-    # else
-    #     throw(DomainError(xg, "Action not in available actions."))
-    # end
-    xp = game_state.xp + action
-
-    # make updates to pacman board based on new pacman location
-    pellets = deepcopy(game_state.pellets)
-    score = deepcopy(game_state.score)
-    if pellets[xp]
-        pellets[xp] = false
-        score += 1
-    end
-
-    # update power pellets and power
-    
-    if pacman.power_pellets[xp]
-        pacman.power_pellets[xp] = false
-        pacman.power = true
-        pacman.power_count = 0
-    end
-
-    if pacman.power
-        pacman.power_count += 1
-        collision = pacman.xg .== pacman.xp
-        pacman.score += sum(collision) * 5
-        pacman.ng -= sum(collision)
-        deleteat!(pacman.xg, collision)
-        deleteat!(pacman.pg, collision)
-    end
-
-    if pacman.xp in pacman.xg && !pacman.power
-        pacman.game_over = true
-        pacman.win = false
-    end
-
-    # update ghosts
-    for g = 1:pacman.ng
-        update_ghost!(pacman, g)
-    end
-
-    # check again if pacman is on top of any ghost
-    if pacman.power
-        pacman.power_count += 1
-        collision = pacman.xg .== pacman.xp
-        pacman.score += sum(collision) * 5
-        pacman.ng -= sum(collision)
-        deleteat!(pacman.xg, collision)
-        deleteat!(pacman.pg, collision)
-    end
-
-    if pacman.xp in pacman.xg && !pacman.power
-        pacman.game_over = true
-        pacman.win = false
-    end
-
-    # check power count against power limit
-    if pacman.power_count > pacman.power_limit
-        pacman.power_count = 0
-        pacman.power = false
-    end
-
-    if sum(pacman.pellets == 0 && pacman.game_mode_pellets)
-        pacman.win = true
-        pacman.game_over = true
-    end
-
-    new_game_state = PacmanGameState(
-        pacman.xp,
-        pacman.xg,
-        pacman.game_over,
-        pacman.pellets,
-        pacman.power_pellets,
-        pacman.power,
-        pacman.power_count,
-        pacman.score,
-        pacman.win,
-    )
-    push!(pacman.game_history, new_game_state)
-
-    
+    pacman.game_state = deepcopy(new_game_state)
+    pacman.pg = copy(new_pg)
+    pacman.ng = new_ng
     return new_game_state
 end
 
