@@ -15,9 +15,9 @@ available_squares =
 xp = 1
 xg = [25, 13]
 ng = 2
-pg_types = [:RandomGhostPolicy, :RandomGhostPolicy]
+pg_types = [:RandomGhostPolicy, :ShortestDistancePolicy]
 # pg_types = [:RandomGhostPolicy]
-available_pellets = [2, 21, 3, 8]
+available_pellets = [21, 8]
 
 pacman = Pacman(
     game_size = game_size,
@@ -65,6 +65,11 @@ pacman_transition =
 end
 
 pacman_transition.vertex_data
+
+
+##
+
+
 
 ##
 
