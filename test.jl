@@ -3,6 +3,8 @@ import FromFile: @from
 
 @from "src/pacman.jl" using Pacmen
 
+# game_size = 2
+# available_squares = [1, 2]
 # game_size = 3
 # available_squares = [1, 2, 3, 4, 6, 7, 8, 9]
 game_size = 5
@@ -13,8 +15,9 @@ available_squares =
 xp = 1
 xg = [25, 13]
 ng = 2
-pg_types = [:ShortestDistancePolicy, :ShortestDistancePolicy]
-available_pellets = [2, 3, 4, 6]
+pg_types = [:RandomGhostPolicy, :RandomGhostPolicy]
+# pg_types = [:RandomGhostPolicy]
+available_pellets = [2]
 
 pacman = Pacman(
     game_size = game_size,
@@ -24,6 +27,8 @@ pacman = Pacman(
     available_squares = available_squares,
     available_pellets = available_pellets,
 )
+
+# update_game_state(pacman.game_state, 3, pacman.pg, ghost_actions=[1, -3])
 
 ##
 
@@ -40,7 +45,7 @@ actions = pacman.actions
 
 pacman_transition = PacmanTransition(pg, squares, actions)
 
-expand_from_initial_state!(pacman_transition, game_state)
+@time expand_from_initial_state!(pacman_transition, game_state)
 
 @time for xp in available_squares
     pacman = Pacman(
@@ -58,3 +63,9 @@ end
 ##
 
 pacman_transition.vertex_data
+unique(vcat(pacman_transition.nondeterministic_vertices, pacman_transition.deterministic_vertices))
+
+## 
+
+t = plot(pacman_transition.g)
+

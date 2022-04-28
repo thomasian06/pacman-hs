@@ -154,6 +154,7 @@ function update_game_state(
     action::Int,
     pg::Vector{<:GhostPolicy};
     game_mode_pellets::Bool = false,
+    ghost_actions::Vector{Int} = nothing,
 )
 
     xp = game_state.xp + action
@@ -182,9 +183,13 @@ function update_game_state(
     end
 
     # update ghosts
-    for g = 1:ng
-        action = ghost_action(xp, xg[g], pg[g])
-        xg[g] += action
+    if isnothing(ghost_actions)
+        for g = 1:ng
+            action = ghost_action(xp, xg[g], pg[g])
+            xg[g] += action
+        end
+    else
+        xg .+= ghost_actions
     end
 
     if xp in xg

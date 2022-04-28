@@ -9,7 +9,8 @@ export sq2i,
     ShortestDistancePolicy,
     available_policies,
     policy_map,
-    ghost_action
+    ghost_action,
+    get_available_policy_actions
 
 using DataStructures
 
@@ -74,6 +75,10 @@ function ghost_action(xp::Int, xg::Int, policy::RandomGhostPolicy)
     return policy.actions[rand(findall(policy.squares[xg, :]))]
 end
 
+function get_available_policy_actions(xp::Int, xg::Int, policy::RandomGhostPolicy)
+    return policy.actions[findall(policy.squares[xg, :])]
+end
+
 struct DeterministicRoutePolicy <: GhostPolicy
     squares::BitArray{2}
     actions::Vector{Int}
@@ -86,6 +91,10 @@ end
 
 function ghost_action(xp::Int, xg::Int, policy::DeterministicRoutePolicy)
     return policy.route[xg]
+end
+
+function get_available_policy_actions(xp::Int, xg::Int, policy::DeterministicRoutePolicy)
+    return [ghost_action(xp, xg, policy)]
 end
 
 struct ShortestDistancePolicy <: GhostPolicy
@@ -112,6 +121,9 @@ function ghost_action(xp::Int, xg::Int, policy::ShortestDistancePolicy)
     ]
 end
 
+function get_available_policy_actions(xp::Int, xg::Int, policy::ShortestDistancePolicy)
+    return [ghost_action(xp, xg, policy)]
+end
 
 available_policies =
     [:RandomGhostPolicy, :DeterministicRoutePolicy, :ShortestDistancePolicy]
