@@ -17,7 +17,7 @@ xg = [25, 13]
 ng = 2
 pg_types = [:RandomGhostPolicy, :RandomGhostPolicy]
 # pg_types = [:RandomGhostPolicy]
-available_pellets = [2]
+available_pellets = [2, 21, 3, 8]
 
 pacman = Pacman(
     game_size = game_size,
@@ -26,6 +26,7 @@ pacman = Pacman(
     pg_types = pg_types,
     available_squares = available_squares,
     available_pellets = available_pellets,
+    game_mode_pellets = true,
 )
 
 # update_game_state(pacman.game_state, 3, pacman.pg, ghost_actions=[1, -3])
@@ -42,8 +43,10 @@ squares = pacman.squares
 pg = pacman.pg
 game_state = pacman.game_state
 actions = pacman.actions
+game_mode_pellets = true
 
-pacman_transition = PacmanTransition(pg, squares, actions)
+pacman_transition =
+    PacmanTransition(pg, squares, actions, game_mode_pellets = game_mode_pellets)
 
 @time expand_from_initial_state!(pacman_transition, game_state)
 
@@ -55,14 +58,20 @@ pacman_transition = PacmanTransition(pg, squares, actions)
         pg_types = pg_types,
         available_squares = available_squares,
         available_pellets = available_pellets,
+        game_mode_pellets = game_mode_pellets,
     )
     game_state = pacman.game_state
     expand_from_initial_state!(pacman_transition, game_state)
 end
 
+pacman_transition.vertex_data
+
 ##
 
-pacman_transition.vertex_data
+Base.summarysize(pacman_transition)
+
+##
+
 unique(
     vcat(
         pacman_transition.nondeterministic_vertices,
@@ -70,7 +79,9 @@ unique(
     ),
 )
 
+sum(sum(game_state.pellets) for game_state in pacman_transition.vertex_data)
+
 ## 
 
-t = plot(pacman_transition.g)
+strongly_connected_components(pacman_transition.g)
 

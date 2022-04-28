@@ -25,18 +25,14 @@ struct PacmanGameState
         xg::Vector{Int},
         game_over::Bool,
         pellets::BitArray{} = BitArray(0),
-        score::Int = nothing,
+        score::Int = 0,
         win::Bool = false,
     )
         new(xp, xg, game_over, pellets, score, win)
     end
 end
 
-function compare_game_states(
-    a::PacmanGameState,
-    b::PacmanGameState,
-    game_mode_pellets::Bool = false,
-)
+function equals(a::PacmanGameState, b::PacmanGameState, game_mode_pellets::Bool = false)
     if !game_mode_pellets
         if a.xp == b.xp && a.game_over == b.game_over && all(a.xg .== b.xg)
             return true
@@ -58,7 +54,7 @@ function compare_game_states(
     return false
 end
 
-Base.:(==)(a::PacmanGameState, b::PacmanGameState) = compare_game_states(a, b)
+Base.:(==)(a::PacmanGameState, b::PacmanGameState) = equals(a, b)
 
 function Base.in(a::PacmanGameState, A::Vector{PacmanGameState})
     @inbounds for ap in A
@@ -67,12 +63,28 @@ function Base.in(a::PacmanGameState, A::Vector{PacmanGameState})
     return false
 end
 
-function findindex(a::PacmanGameState, A::Vector{PacmanGameState})
+function instates(
+    a::PacmanGameState,
+    A::Vector{PacmanGameState},
+    game_mode_pellets::Bool = false,
+)
+    @inbounds for ap in A
+        equals(ap, a, game_mode_pellets) ? (return true) : continue
+    end
+    return false
+end
+
+function findindex(
+    a::PacmanGameState,
+    A::Vector{PacmanGameState},
+    game_mode_pellets::Bool = false,
+)
     @inbounds for (i, ap) in enumerate(A)
-        ap == a ? (return i) : continue
+        equals(ap, a, game_mode_pellets) ? (return i) : continue
     end
     return 0
 end
+
 
 mutable struct Pacman
 
@@ -154,7 +166,7 @@ function update_game_state(
     action::Int,
     pg::Vector{<:GhostPolicy};
     game_mode_pellets::Bool = false,
-    ghost_actions::Vector{Int} = nothing,
+    ghost_actions::Union{Vector{Int},Nothing} = nothing,
 )
 
     xp = game_state.xp + action
@@ -164,8 +176,8 @@ function update_game_state(
 
     if game_mode_pellets
         # make updates to pacman board based on new pacman location
-        pellets = copy(game_state.pellets)
-        score = copy(game_state.score)
+        pellets = deepcopy(game_state.pellets)
+        score = deepcopy(game_state.score)
         if pellets[xp]
             pellets[xp] = false
             score += 1

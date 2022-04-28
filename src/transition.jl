@@ -5,7 +5,8 @@ export PacmanTransition, expand_from_initial_state!
 
 using LightGraphs
 import FromFile: @from
-@from "pacman.jl" import Pacmen: PacmanGameState, Pacman, update_game_state, findindex
+@from "pacman.jl" import Pacmen:
+    PacmanGameState, Pacman, update_game_state, findindex, instates
 @from "ghost_policies.jl" import GhostPolicies:
     GhostPolicy, ghost_action, get_available_policy_actions
 
@@ -44,9 +45,9 @@ mutable struct PacmanTransition
             p.deterministic ? continue : (deterministic = false; break)
         end
         if deterministic
-            deterministic_vertices = nothing
-            nondeterministic_vertices = nothing
-            nondeterministic_edge_data = nothing
+            deterministic_vertices = Vector{Int}()
+            nondeterministic_vertices = Vector{Int}()
+            nondeterministic_edge_data = Vector{Vector{Int}}()
         else
             deterministic_vertices = Vector{Int}()
             nondeterministic_vertices = Vector{Int}()
@@ -78,7 +79,11 @@ function LightGraphs.add_vertex!(
     game_state::PacmanGameState;
     check::Bool = false,
 )
-    if check && game_state in pacman_transition.vertex_data
+    if check && instates(
+        game_state,
+        pacman_transition.vertex_data,
+        pacman_transition.game_mode_pellets,
+    )
         return false
     end
     push!(pacman_transition.vertex_data, game_state)
@@ -110,7 +115,11 @@ function expand_from_state!(
     game_state::PacmanGameState,
 )
 
-    state_ind = findindex(game_state, pacman_transition.vertex_data)
+    state_ind = findindex(
+        game_state,
+        pacman_transition.vertex_data,
+        pacman_transition.game_mode_pellets,
+    )
     if state_ind > 0
         return state_ind
     end
@@ -118,14 +127,32 @@ function expand_from_state!(
     add_vertex!(pacman_transition, game_state)
     state_ind = nv(pacman_transition.g)
 
-    if game_state.game_over
-        push!(pacman_transition.unsafe_states, state_ind)
-        if !pacman_transition.deterministic
-            push!(pacman_transition.deterministic_vertices, state_ind)
+
+    if pacman_transition.game_mode_pellets # pellets, so reachability game
+        if game_state.game_over
+            if game_state.win
+                push!(pacman_transition.accepting_states, state_ind)
+                if !pacman_transition.deterministic
+                    push!(pacman_transition.deterministic_vertices, state_ind)
+                end
+            else
+                push!(pacman_transition.unsafe_states, state_ind)
+                if !pacman_transition.deterministic
+                    push!(pacman_transition.deterministic_vertices, state_ind)
+                end
+            end
+            return state_ind # don't need to progress after game over
         end
-        return state_ind # don't need to progress after unsafe states
-    else
-        push!(pacman_transition.accepting_states, state_ind)
+    else # no pellets, so avoidance buchi game
+        if game_state.game_over
+            push!(pacman_transition.unsafe_states, state_ind)
+            if !pacman_transition.deterministic
+                push!(pacman_transition.deterministic_vertices, state_ind)
+            end
+            return state_ind # don't need to progress after unsafe states
+        else
+            push!(pacman_transition.accepting_states, state_ind)
+        end
     end
 
     available_actions =
@@ -134,7 +161,12 @@ function expand_from_state!(
     if pacman_transition.deterministic
 
         @inbounds for action in available_actions
-            new_game_state = update_game_state(game_state, action, pacman_transition.pg)
+            new_game_state = update_game_state(
+                game_state,
+                action,
+                pacman_transition.pg,
+                game_mode_pellets = pacman_transition.game_mode_pellets,
+            )
             new_state_ind = expand_from_state!(pacman_transition, new_game_state)
             add_edge!(pacman_transition, state_ind, new_state_ind, action)
         end
@@ -174,6 +206,7 @@ function expand_from_state!(
                     action,
                     pacman_transition.pg,
                     ghost_actions = ghost_actions[i, :],
+                    game_mode_pellets = pacman_transition.game_mode_pellets,
                 )
                 new_state_ind = expand_from_state!(pacman_transition, new_game_state)
                 add_edge!(
@@ -219,7 +252,11 @@ function expand_from_initial_state!(
     pacman_transition::PacmanTransition,
     game_state::PacmanGameState,
 )
-    initial_state_ind = findindex(game_state, pacman_transition.vertex_data)
+    initial_state_ind = findindex(
+        game_state,
+        pacman_transition.vertex_data,
+        pacman_transition.game_mode_pellets,
+    )
     if initial_state_ind == 0
         initial_state_ind = expand_from_state!(pacman_transition, game_state)
     end
