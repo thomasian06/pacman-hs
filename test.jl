@@ -63,7 +63,12 @@ end
 ##
 
 pacman_transition.vertex_data
-unique(vcat(pacman_transition.nondeterministic_vertices, pacman_transition.deterministic_vertices))
+unique(
+    vcat(
+        pacman_transition.nondeterministic_vertices,
+        pacman_transition.deterministic_vertices,
+    ),
+)
 
 ## 
 

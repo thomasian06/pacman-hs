@@ -6,7 +6,8 @@ export PacmanTransition, expand_from_initial_state!
 using LightGraphs
 import FromFile: @from
 @from "pacman.jl" import Pacmen: PacmanGameState, Pacman, update_game_state, findindex
-@from "ghost_policies.jl" import GhostPolicies: GhostPolicy, ghost_action, get_available_policy_actions
+@from "ghost_policies.jl" import GhostPolicies:
+    GhostPolicy, ghost_action, get_available_policy_actions
 
 mutable struct PacmanTransition
 
@@ -106,7 +107,7 @@ end
 
 function expand_from_state!(
     pacman_transition::PacmanTransition,
-    game_state::PacmanGameState
+    game_state::PacmanGameState,
 )
 
     state_ind = findindex(game_state, pacman_transition.vertex_data)
@@ -160,12 +161,27 @@ function expand_from_state!(
             add_vertex!(pacman_transition, game_state)
             nondeterministic_state_ind = nv(pacman_transition.g)
             push!(pacman_transition.nondeterministic_vertices, nondeterministic_state_ind)
-            add_edge!(pacman_transition, deterministic_state_ind, nondeterministic_state_ind, action)
-            
+            add_edge!(
+                pacman_transition,
+                deterministic_state_ind,
+                nondeterministic_state_ind,
+                action,
+            )
+
             @inbounds for i = 1:n_actions
-                new_game_state = update_game_state(game_state, action, pacman_transition.pg, ghost_actions = ghost_actions[i, :])
+                new_game_state = update_game_state(
+                    game_state,
+                    action,
+                    pacman_transition.pg,
+                    ghost_actions = ghost_actions[i, :],
+                )
                 new_state_ind = expand_from_state!(pacman_transition, new_game_state)
-                add_edge!(pacman_transition, nondeterministic_state_ind, new_state_ind, ghost_actions[i, :])
+                add_edge!(
+                    pacman_transition,
+                    nondeterministic_state_ind,
+                    new_state_ind,
+                    ghost_actions[i, :],
+                )
             end
         end
 
@@ -180,7 +196,7 @@ function permute_vecvec(arr::Vector{Vector{Int}})
     out = zeros(Int, (n_out, n))
     count = 1
     while count <= n_out
-        for i in 1:n
+        for i = 1:n
             out[count, i] = arr[i][inds[i]]
         end
         next = n - 1
@@ -191,7 +207,7 @@ function permute_vecvec(arr::Vector{Vector{Int}})
             break
         end
         inds[next+1] += 1
-        for i = (next+1):(n - 1)
+        for i = (next+1):(n-1)
             inds[i+1] = 1
         end
         count += 1
