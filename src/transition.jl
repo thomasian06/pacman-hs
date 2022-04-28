@@ -113,8 +113,10 @@ function expand_from_state!(
     if state_ind > 0
         return state_ind
     end
+
     add_vertex!(pacman_transition, game_state)
     state_ind = nv(pacman_transition.g)
+
     if game_state.game_over
         push!(pacman_transition.unsafe_states, state_ind)
         if !pacman_transition.deterministic
@@ -124,6 +126,7 @@ function expand_from_state!(
     else
         push!(pacman_transition.accepting_states, state_ind)
     end
+
     available_actions =
         pacman_transition.actions[pacman_transition.squares[game_state.xp, :]]
 
@@ -140,19 +143,25 @@ function expand_from_state!(
 
         deterministic_state_ind = state_ind
         push!(pacman_transition.deterministic_vertices, deterministic_state_ind)
+
         @inbounds for action in available_actions
+
             xp_new = game_state.xp + action
+
             list_ghost_actions = Vector{Vector{Int}}()
             for (i, pg) in enumerate(pacman_transition.pg)
                 xg = game_state.xg[i]
                 available_ghost_actions = get_available_policy_actions(xp_new, xg, pg)
                 push!(list_ghost_actions, available_ghost_actions)
             end
+
             ghost_actions, n_actions = permute_vecvec(list_ghost_actions)
+
             add_vertex!(pacman_transition, game_state)
             nondeterministic_state_ind = nv(pacman_transition.g)
             push!(pacman_transition.nondeterministic_vertices, nondeterministic_state_ind)
             add_edge!(pacman_transition, deterministic_state_ind, nondeterministic_state_ind, action)
+            
             @inbounds for i = 1:n_actions
                 new_game_state = update_game_state(game_state, action, pacman_transition.pg, ghost_actions = ghost_actions[i, :])
                 new_state_ind = expand_from_state!(pacman_transition, new_game_state)
