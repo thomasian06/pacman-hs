@@ -1,10 +1,14 @@
 
 module Pacmen
 
-export Pacman, PacmanGameState, update_game_state, update_pacman!, findindex
+export Pacman, PacmanGameState, update_game_state, update_pacman!, findindex, visualize_game_history
 
 import FromFile: @from
 @from "ghost_policies.jl" using GhostPolicies
+
+using CairoMakie
+using FileIO
+
 
 export ghost_action,
     available_policies,
@@ -90,6 +94,7 @@ mutable struct Pacman
 
     game_state::PacmanGameState
     game_size::Int # dimension of square board 
+    available_squares::Vector{Int}
     ng::Int # number of ghosts on board
     pg::Vector{<:GhostPolicy} # array of the ghost policies
     squares::BitArray{2} # array of actions and squares (have values 0-15 for each square, with a bit describing if an action is available in NESW order, LSB is W, bit 3 is N)
@@ -150,6 +155,7 @@ mutable struct Pacman
         new(
             game_state,
             game_size,
+            available_squares,
             ng,
             pg,
             squares,
@@ -277,6 +283,43 @@ function generate_squares(game_size::Int, available_squares::Array{Int})
     end
 
     return squares
+end
+
+function visualize_game_history(pacman::Pacman)
+
+    # Grid points
+    # grid_x = (1:pacman.game_size)'.*ones(pacman.game_size)
+    # grid_y = reverse(grid_x',dims = 1)
+
+    lp = 0.3
+    lg = 0.6
+
+    vec_x = repeat(1:pacman.game_size,pacman.game_size)
+    vec_y = repeat(1:pacman.game_size,inner = pacman.game_size)
+    vec_z = ones(pacman.game_size^2)
+    vec_z[pacman.available_squares] .= 0
+
+    for i in 1:length(pacman.game_history)
+        xp = pacman.game_history[i].xp 
+
+        f = Figure(backgroundcolor = :black)
+        ax = Axis(f[1, 1], title = "Title", aspect = 1)
+        heatmap!(ax,vec_x,vec_y,vec_z,colormap = Reverse(:tempo)) # venue
+        poly!(Circle(Point2f(vec_x[xp], vec_y[xp]), lp), color = :yellow) # pacman
+
+        for j in 1:pacman.ng
+            xg = pacman.game_history[i].xg[j]
+            poly!(Point2f[(-lg/2, -lg*sqrt(3)/6), (lg/2, -lg*sqrt(3)/6), (0, lg*sqrt(3)/3)] .+ Point2f[(vec_x[xg],vec_y[xg])] , color = :red)        
+        end
+
+        display(f)
+
+        sleep(0.75)
+    end
+
+    # Generate coordinates form available squares
+
+
 end
 
 end
