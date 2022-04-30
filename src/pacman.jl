@@ -95,6 +95,7 @@ mutable struct Pacman
     game_state::PacmanGameState
     game_size::Int # dimension of square board 
     available_squares::Vector{Int}
+    available_pellets::Vector{}
     ng::Int # number of ghosts on board
     pg::Vector{<:GhostPolicy} # array of the ghost policies
     squares::BitArray{2} # array of actions and squares (have values 0-15 for each square, with a bit describing if an action is available in NESW order, LSB is W, bit 3 is N)
@@ -156,6 +157,7 @@ mutable struct Pacman
             game_state,
             game_size,
             available_squares,
+            available_pellets,
             ng,
             pg,
             squares,
@@ -291,22 +293,33 @@ function visualize_game_history(pacman::Pacman)
     # grid_x = (1:pacman.game_size)'.*ones(pacman.game_size)
     # grid_y = reverse(grid_x',dims = 1)
 
-    lp = 0.3
-    lg = 0.6
+    lp = 0.3  # pacman
+    lg = 0.6  # ghosts
+    lf = 0.1 # food
 
     vec_x = repeat(1:pacman.game_size,pacman.game_size)
     vec_y = repeat(1:pacman.game_size,inner = pacman.game_size)
     vec_z = ones(pacman.game_size^2)
     vec_z[pacman.available_squares] .= 0
 
-    for i in 1:length(pacman.game_history)
-        xp = pacman.game_history[i].xp 
+    for i in 1:length(pacman.game_history)      
 
+        # Venue
         f = Figure(backgroundcolor = :black)
         ax = Axis(f[1, 1], title = "Title", aspect = 1)
-        heatmap!(ax,vec_x,vec_y,vec_z,colormap = Reverse(:tempo)) # venue
-        poly!(Circle(Point2f(vec_x[xp], vec_y[xp]), lp), color = :yellow) # pacman
+        heatmap!(ax,vec_x,vec_y,vec_z,colormap = Reverse(:tempo)) 
 
+        # Pellets
+        for j in 1:length(pacman.available_pellets)
+            xf = pacman.available_pellets[j]
+            poly!(Circle(Point2f(vec_x[xf], vec_y[xf]), lf), color = :yellow) #    
+        end
+
+        # Pac-Man
+        xp = pacman.game_history[i].xp 
+        poly!(Circle(Point2f(vec_x[xp], vec_y[xp]), lp), color = :yellow) 
+
+        # Ghosts
         for j in 1:pacman.ng
             xg = pacman.game_history[i].xg[j]
             poly!(Point2f[(-lg/2, -lg*sqrt(3)/6), (lg/2, -lg*sqrt(3)/6), (0, lg*sqrt(3)/3)] .+ Point2f[(vec_x[xg],vec_y[xg])] , color = :red)        
