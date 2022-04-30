@@ -305,8 +305,9 @@ function visualize_game_history(pacman::Pacman)
     for i in 1:length(pacman.game_history)      
 
         # Venue
-        f = Figure(backgroundcolor = :black)
-        ax = Axis(f[1, 1], title = "Title", aspect = 1)
+        f = Figure(backgroundcolor = :white, resolution = (500, 500))
+        ax = Axis(f[1, 1], aspect = 1)
+        hidedecorations!(ax)
         heatmap!(ax,vec_x,vec_y,vec_z,colormap = Reverse(:tempo)) 
 
         # Pellets

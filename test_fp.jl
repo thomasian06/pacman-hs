@@ -17,7 +17,7 @@ xg = [25, 13]
 ng = 2
 pg_types = [:RandomGhostPolicy, :ShortestDistancePolicy]
 # pg_types = [:RandomGhostPolicy]
-available_pellets = [21, 8]
+available_pellets = [21]
 
 pacman = Pacman(
     game_size = game_size,
@@ -30,13 +30,7 @@ pacman = Pacman(
 )
 
 # Move up 4 times
-update_pacman!(pacman,5)
-update_pacman!(pacman,-5)
 update_pacman!(pacman,1)
-update_pacman!(pacman,1)
-update_pacman!(pacman,5)
-update_pacman!(pacman,5)
-update_pacman!(pacman,5)
 
 # Plot 
 visualize_game_history(pacman)
