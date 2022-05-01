@@ -62,24 +62,6 @@ end
 
 pt.vertex_data
 
-# Base.summarysize(pt)
-
-# unique(
-#     vcat(
-#         pt.nondeterministic_vertices,
-#         pt.deterministic_vertices,
-#     ),
-# )
-
-# length(pt.nondeterministic_vertices)
-# length(pt.deterministic_vertices)
-
-# sum(sum(game_state.pellets) for game_state in pt.vertex_data)
-
-# strongly_connected_components(pt.g)
-
-##
-
 attr, action_map = Attr(pt, pt.accepting, pt.deterministic_vertices)
 
 winning_region = intersect(attr, pt.initial)
@@ -91,6 +73,30 @@ end
 
 pacman_start
 
-##
+## play pacman game
 
-attr_det_edges = filter(x -> x.src ∈ attr && x.dst ∈ attr, pt.edge_data)
+pacman = Pacman(
+    game_size = game_size,
+    xp = xp,
+    xg = xg,
+    pg_types = pg_types,
+    available_squares = available_squares,
+    available_pellets = available_pellets,
+    game_mode_pellets = game_mode_pellets,
+)
+
+initial_state = pacman.game_state
+initial_node = findfirst(x -> equals(x, initial_state, game_mode_pellets), pt.vertex_data)
+
+action_map = collect(action_map)
+current_node = initial_node
+
+i = 1
+while !pacman.game_state.game_over
+    println(i)
+    current_edge = action_map[findfirst(x -> x.src == current_node, action_map)]
+    current_node = current_edge.dst
+    action = current_edge.act
+    update_pacman!(pacman, action)
+    i += 1
+end
