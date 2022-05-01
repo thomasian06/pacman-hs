@@ -41,8 +41,7 @@ game_state = pacman.game_state
 actions = pacman.actions
 game_mode_pellets = true
 
-pt =
-    PacmanTransition(pg, squares, actions, game_mode_pellets = game_mode_pellets)
+pt = PacmanTransition(pg, squares, actions, game_mode_pellets = game_mode_pellets)
 
 @time expand_from_initial_state!(pt, game_state)
 

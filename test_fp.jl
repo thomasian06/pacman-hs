@@ -30,7 +30,7 @@ pacman = Pacman(
 )
 
 # Move up 4 times
-update_pacman!(pacman,1)
+update_pacman!(pacman, 1)
 
 # Plot 
 visualize_game_history(pacman)

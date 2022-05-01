@@ -73,47 +73,26 @@ function LightGraphs.add_vertex!(
     game_state::PacmanGameState;
     check::Bool = false,
 )
-    if check && instates(
-        game_state,
-        pt.vertex_data,
-        pt.game_mode_pellets,
-    )
+    if check && instates(game_state, pt.vertex_data, pt.game_mode_pellets)
         return false
     end
     push!(pt.vertex_data, game_state)
     return add_vertex!(pt.g)
 end
 
-function LightGraphs.add_edge!(
-    pt::PacmanTransition,
-    a::Int,
-    b::Int,
-    action::Int,
-)
+function LightGraphs.add_edge!(pt::PacmanTransition, a::Int, b::Int, action::Int)
     add_edge!(pt.g, a, b)
     push!(pt.edge_data, action)
 end
 
-function LightGraphs.add_edge!(
-    pt::PacmanTransition,
-    a::Int,
-    b::Int,
-    action::Vector{Int},
-)
+function LightGraphs.add_edge!(pt::PacmanTransition, a::Int, b::Int, action::Vector{Int})
     add_edge!(pt.g, a, b)
     push!(pt.nondeterministic_edge_data, action)
 end
 
-function expand_from_state!(
-    pt::PacmanTransition,
-    game_state::PacmanGameState,
-)
+function expand_from_state!(pt::PacmanTransition, game_state::PacmanGameState)
 
-    state_ind = findindex(
-        game_state,
-        pt.vertex_data,
-        pt.game_mode_pellets,
-    )
+    state_ind = findindex(game_state, pt.vertex_data, pt.game_mode_pellets)
     if state_ind > 0
         return state_ind
     end
@@ -149,8 +128,7 @@ function expand_from_state!(
         end
     end
 
-    available_actions =
-        pt.actions[pt.squares[game_state.xp, :]]
+    available_actions = pt.actions[pt.squares[game_state.xp, :]]
 
     if pt.deterministic
 
@@ -187,12 +165,7 @@ function expand_from_state!(
             add_vertex!(pt, game_state)
             nondeterministic_state_ind = nv(pt.g)
             push!(pt.nondeterministic_vertices, nondeterministic_state_ind)
-            add_edge!(
-                pt,
-                deterministic_state_ind,
-                nondeterministic_state_ind,
-                action,
-            )
+            add_edge!(pt, deterministic_state_ind, nondeterministic_state_ind, action)
 
             @inbounds for i = 1:n_actions
                 new_game_state = update_game_state(
@@ -242,15 +215,8 @@ function permute_vecvec(arr::Vector{Vector{Int}})
     return out, n_out
 end
 
-function expand_from_initial_state!(
-    pt::PacmanTransition,
-    game_state::PacmanGameState,
-)
-    initial_state_ind = findindex(
-        game_state,
-        pt.vertex_data,
-        pt.game_mode_pellets,
-    )
+function expand_from_initial_state!(pt::PacmanTransition, game_state::PacmanGameState)
+    initial_state_ind = findindex(game_state, pt.vertex_data, pt.game_mode_pellets)
     if initial_state_ind == 0
         initial_state_ind = expand_from_state!(pt, game_state)
     end
