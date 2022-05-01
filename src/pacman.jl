@@ -2,7 +2,12 @@
 module Pacmen
 
 export Pacman,
-    PacmanGameState, update_game_state, update_pacman!, findindex, visualize_game_history, equals
+    PacmanGameState,
+    update_game_state,
+    update_pacman!,
+    findindex,
+    visualize_game_history,
+    equals
 
 import FromFile: @from
 @from "ghost_policies.jl" using GhostPolicies
