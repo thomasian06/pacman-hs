@@ -18,11 +18,11 @@ available_squares =
     [1, 2, 3, 4, 5, 6, 8, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 23, 24, 25]
 
 xp = 1
-xg = [25, 13, 8]
-ng = 3
-pg_types = [:ShortestDistancePolicy, :ShortestDistancePolicy, :ShortestDistancePolicy]
-available_pellets = []
-game_mode_pellets = false
+xg = [25, 13]
+ng = 2
+pg_types = [:ShortestDistancePolicy, :ShortestDistancePolicy]
+available_pellets = [8, 21]
+game_mode_pellets = true
 
 pacman = Pacman(
     game_size = game_size,
@@ -42,8 +42,7 @@ game_state = pacman.game_state
 actions = pacman.actions
 game_mode_pellets = pacman.game_mode_pellets
 
-pt =
-    PacmanTransition(pg, squares, actions, game_mode_pellets = game_mode_pellets)
+pt = PacmanTransition(pg, squares, actions, game_mode_pellets = game_mode_pellets)
 
 @time expand_from_initial_state!(pt, game_state)
 
@@ -81,11 +80,17 @@ pt.vertex_data
 
 ##
 
-winning_region = Attr(pt, pt.unsafe, pt.nondeterministic_vertices)
+attr, action_map = Attr(pt, pt.accepting, pt.deterministic_vertices)
 
-intersect!(winning_region, pt.initial)
+winning_region = intersect(attr, pt.initial)
 
 pacman_start = Set{Int}()
 for s in collect(winning_region)
     push!(pacman_start, pt.vertex_data[s].xp)
 end
+
+pacman_start
+
+##
+
+attr_det_edges = filter(x -> x.src ∈ attr && x.dst ∈ attr, pt.edge_data)

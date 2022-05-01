@@ -1,7 +1,7 @@
 
 module PacmanTransitions
 
-export PacmanTransition, expand_from_initial_state!
+export PacmanTransition, expand_from_initial_state!, DEdge, NDEdge
 
 using LightGraphs
 import FromFile: @from
@@ -233,7 +233,7 @@ function expand_from_initial_state!(pt::PacmanTransition, game_state::PacmanGame
     if initial_state_ind ∉ pt.initial
         push!(pt.initial, initial_state_ind)
     end
-
+    pt.deterministic && (pt.deterministic_vertices = Set{Int}(collect(1:nv(pt.g))))
 end
 
 end # module PacmanTransitions end
