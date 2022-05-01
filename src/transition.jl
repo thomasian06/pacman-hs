@@ -10,6 +10,18 @@ import FromFile: @from
 @from "ghost_policies.jl" import GhostPolicies:
     GhostPolicy, ghost_action, get_available_policy_actions
 
+struct DEdge{T<:Int}
+    src::T
+    dst::T
+    act::T
+end
+
+struct NDEdge{T<:Int}
+    src::T
+    dst::T
+    act::Vector{T}
+end
+
 mutable struct PacmanTransition
 
     pg::Vector{<:GhostPolicy}
@@ -18,14 +30,14 @@ mutable struct PacmanTransition
     actions::Vector{Int}
     game_mode_pellets::Bool
     vertex_data::Vector{PacmanGameState}
-    edge_data::Vector{Int} # becomes deterministic_edge_data if nondeterministic
+    edge_data::Vector{DEdge} # becomes deterministic_edge_data if nondeterministic
     initial::Set{Int}
     unsafe::Set{Int}
     accepting::Set{Int}
     deterministic::Bool
     deterministic_vertices::Set{Int} # set of graph indices that are p1 deterministic
     nondeterministic_vertices::Set{Int} # set of graph indices that are p2 nondeterministic
-    nondeterministic_edge_data::Vector{Vector{Int}} # 
+    nondeterministic_edge_data::Vector{NDEdge} # 
     g::SimpleDiGraph
 
     function PacmanTransition(
@@ -82,12 +94,12 @@ end
 
 function LightGraphs.add_edge!(pt::PacmanTransition, a::Int, b::Int, action::Int)
     add_edge!(pt.g, a, b)
-    push!(pt.edge_data, action)
+    push!(pt.edge_data, DEdge(a, b, action))
 end
 
 function LightGraphs.add_edge!(pt::PacmanTransition, a::Int, b::Int, action::Vector{Int})
     add_edge!(pt.g, a, b)
-    push!(pt.nondeterministic_edge_data, action)
+    push!(pt.nondeterministic_edge_data, NDEdge(a, b, action))
 end
 
 function expand_from_state!(pt::PacmanTransition, game_state::PacmanGameState)
@@ -105,12 +117,12 @@ function expand_from_state!(pt::PacmanTransition, game_state::PacmanGameState)
         if game_state.game_over
             if game_state.win
                 push!(pt.accepting, state_ind)
-                if !pacman_transition.deterministic
+                if !pt.deterministic
                     push!(pt.deterministic_vertices, state_ind)
                 end
             else
                 push!(pt.unsafe, state_ind)
-                if !pacman_transition.deterministic
+                if !pt.deterministic
                     push!(pt.deterministic_vertices, state_ind)
                 end
             end
@@ -119,12 +131,10 @@ function expand_from_state!(pt::PacmanTransition, game_state::PacmanGameState)
     else # no pellets, so safety game
         if game_state.game_over
             push!(pt.unsafe, state_ind)
-            if !pacman_transition.deterministic
+            if !pt.deterministic
                 push!(pt.deterministic_vertices, state_ind)
             end
             return state_ind # don't need to progress after unsafe states
-        else
-            push!(pt.accepting, state_ind)
         end
     end
 

@@ -28,5 +28,25 @@ function FPre(pt::PacmanTransition, F::Set{Int}, p1_states::Set{Int})
     return f_pre
 end
 
+function find_constrained_path(pt::PacmanTransition, si::Int, sf::Int, region::Set{Int}, reversed::Bool = false)
+
+    si ∉ region && sf ∉ region && (return nothing)
+    si == sf && (return nothing)
+
+    next = outneighbors
+    reversed && (next = inneighbors)
+
+    v = Set{Int}() # visited states
+    q = Queue{Int}() # BFS queue
+    enqueue!(q, si)
+    while !isempty(q)
+        s = dequeue!(q)
+        push!(v, s)
+        ns = next(pt.g, s)
+        
+
+    end
+
+end
 
 end # end module ModelCheckers
