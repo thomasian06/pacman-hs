@@ -19,12 +19,12 @@ mutable struct PacmanTransition
     game_mode_pellets::Bool
     vertex_data::Vector{PacmanGameState}
     edge_data::Vector{Int} # becomes deterministic_edge_data if nondeterministic
-    initial_states::Vector{Int}
-    unsafe_states::Vector{Int}
-    accepting_states::Vector{Int}
+    initial::Set{Int}
+    unsafe::Set{Int}
+    accepting::Set{Int}
     deterministic::Bool
-    deterministic_vertices::Vector{Int} # list of graph indices that are p1 deterministic
-    nondeterministic_vertices::Vector{Int} # list of graph indices that are p2 nondeterministic
+    deterministic_vertices::Set{Int} # set of graph indices that are p1 deterministic
+    nondeterministic_vertices::Set{Int} # set of graph indices that are p2 nondeterministic
     nondeterministic_edge_data::Vector{Vector{Int}} # 
     g::SimpleDiGraph
 
@@ -36,23 +36,17 @@ mutable struct PacmanTransition
     )
         vertex_data = Vector{PacmanGameState}()
         edge_data = Vector{Int}()
-        initial_states = Vector{Int}()
-        unsafe_states = Vector{Int}()
-        accepting_states = Vector{Int}()
+        initial = Set{Int}()
+        unsafe = Set{Int}()
+        accepting = Set{Int}()
         deterministic = true
         ng = length(pg)
         for p in pg
             p.deterministic ? continue : (deterministic = false; break)
         end
-        if deterministic
-            deterministic_vertices = Vector{Int}()
-            nondeterministic_vertices = Vector{Int}()
-            nondeterministic_edge_data = Vector{Vector{Int}}()
-        else
-            deterministic_vertices = Vector{Int}()
-            nondeterministic_vertices = Vector{Int}()
-            nondeterministic_edge_data = Vector{Vector{Int}}()
-        end
+        deterministic_vertices = Set{Int}()
+        nondeterministic_vertices = Set{Int}()
+        nondeterministic_edge_data = Vector{Vector{Int}}()
         g = SimpleDiGraph()
         new(
             pg,
@@ -62,9 +56,9 @@ mutable struct PacmanTransition
             game_mode_pellets,
             vertex_data,
             edge_data,
-            initial_states,
-            unsafe_states,
-            accepting_states,
+            initial,
+            unsafe,
+            accepting,
             deterministic,
             deterministic_vertices,
             nondeterministic_vertices,
@@ -75,114 +69,114 @@ mutable struct PacmanTransition
 end
 
 function LightGraphs.add_vertex!(
-    pacman_transition::PacmanTransition,
+    pt::PacmanTransition,
     game_state::PacmanGameState;
     check::Bool = false,
 )
     if check && instates(
         game_state,
-        pacman_transition.vertex_data,
-        pacman_transition.game_mode_pellets,
+        pt.vertex_data,
+        pt.game_mode_pellets,
     )
         return false
     end
-    push!(pacman_transition.vertex_data, game_state)
-    return add_vertex!(pacman_transition.g)
+    push!(pt.vertex_data, game_state)
+    return add_vertex!(pt.g)
 end
 
 function LightGraphs.add_edge!(
-    pacman_transition::PacmanTransition,
+    pt::PacmanTransition,
     a::Int,
     b::Int,
     action::Int,
 )
-    add_edge!(pacman_transition.g, a, b)
-    push!(pacman_transition.edge_data, action)
+    add_edge!(pt.g, a, b)
+    push!(pt.edge_data, action)
 end
 
 function LightGraphs.add_edge!(
-    pacman_transition::PacmanTransition,
+    pt::PacmanTransition,
     a::Int,
     b::Int,
     action::Vector{Int},
 )
-    add_edge!(pacman_transition.g, a, b)
-    push!(pacman_transition.nondeterministic_edge_data, action)
+    add_edge!(pt.g, a, b)
+    push!(pt.nondeterministic_edge_data, action)
 end
 
 function expand_from_state!(
-    pacman_transition::PacmanTransition,
+    pt::PacmanTransition,
     game_state::PacmanGameState,
 )
 
     state_ind = findindex(
         game_state,
-        pacman_transition.vertex_data,
-        pacman_transition.game_mode_pellets,
+        pt.vertex_data,
+        pt.game_mode_pellets,
     )
     if state_ind > 0
         return state_ind
     end
 
-    add_vertex!(pacman_transition, game_state)
-    state_ind = nv(pacman_transition.g)
+    add_vertex!(pt, game_state)
+    state_ind = nv(pt.g)
 
 
-    if pacman_transition.game_mode_pellets # pellets, so reachability game
+    if pt.game_mode_pellets # pellets, so reachability game
         if game_state.game_over
             if game_state.win
-                push!(pacman_transition.accepting_states, state_ind)
+                push!(pt.accepting, state_ind)
                 if !pacman_transition.deterministic
-                    push!(pacman_transition.deterministic_vertices, state_ind)
+                    push!(pt.deterministic_vertices, state_ind)
                 end
             else
-                push!(pacman_transition.unsafe_states, state_ind)
+                push!(pt.unsafe, state_ind)
                 if !pacman_transition.deterministic
-                    push!(pacman_transition.deterministic_vertices, state_ind)
+                    push!(pt.deterministic_vertices, state_ind)
                 end
             end
             return state_ind # don't need to progress after game over
         end
-    else # no pellets, so avoidance buchi game
+    else # no pellets, so safety game
         if game_state.game_over
-            push!(pacman_transition.unsafe_states, state_ind)
+            push!(pt.unsafe, state_ind)
             if !pacman_transition.deterministic
-                push!(pacman_transition.deterministic_vertices, state_ind)
+                push!(pt.deterministic_vertices, state_ind)
             end
             return state_ind # don't need to progress after unsafe states
         else
-            push!(pacman_transition.accepting_states, state_ind)
+            push!(pt.accepting, state_ind)
         end
     end
 
     available_actions =
-        pacman_transition.actions[pacman_transition.squares[game_state.xp, :]]
+        pt.actions[pt.squares[game_state.xp, :]]
 
-    if pacman_transition.deterministic
+    if pt.deterministic
 
         @inbounds for action in available_actions
             new_game_state = update_game_state(
                 game_state,
                 action,
-                pacman_transition.pg,
-                game_mode_pellets = pacman_transition.game_mode_pellets,
+                pt.pg,
+                game_mode_pellets = pt.game_mode_pellets,
             )
-            new_state_ind = expand_from_state!(pacman_transition, new_game_state)
-            add_edge!(pacman_transition, state_ind, new_state_ind, action)
+            new_state_ind = expand_from_state!(pt, new_game_state)
+            add_edge!(pt, state_ind, new_state_ind, action)
         end
         return state_ind
 
     else # nondeterministic transition system
 
         deterministic_state_ind = state_ind
-        push!(pacman_transition.deterministic_vertices, deterministic_state_ind)
+        push!(pt.deterministic_vertices, deterministic_state_ind)
 
         @inbounds for action in available_actions
 
             xp_new = game_state.xp + action
 
             list_ghost_actions = Vector{Vector{Int}}()
-            for (i, pg) in enumerate(pacman_transition.pg)
+            for (i, pg) in enumerate(pt.pg)
                 xg = game_state.xg[i]
                 available_ghost_actions = get_available_policy_actions(xp_new, xg, pg)
                 push!(list_ghost_actions, available_ghost_actions)
@@ -190,11 +184,11 @@ function expand_from_state!(
 
             ghost_actions, n_actions = permute_vecvec(list_ghost_actions)
 
-            add_vertex!(pacman_transition, game_state)
-            nondeterministic_state_ind = nv(pacman_transition.g)
-            push!(pacman_transition.nondeterministic_vertices, nondeterministic_state_ind)
+            add_vertex!(pt, game_state)
+            nondeterministic_state_ind = nv(pt.g)
+            push!(pt.nondeterministic_vertices, nondeterministic_state_ind)
             add_edge!(
-                pacman_transition,
+                pt,
                 deterministic_state_ind,
                 nondeterministic_state_ind,
                 action,
@@ -204,13 +198,13 @@ function expand_from_state!(
                 new_game_state = update_game_state(
                     game_state,
                     action,
-                    pacman_transition.pg,
+                    pt.pg,
                     ghost_actions = ghost_actions[i, :],
-                    game_mode_pellets = pacman_transition.game_mode_pellets,
+                    game_mode_pellets = pt.game_mode_pellets,
                 )
-                new_state_ind = expand_from_state!(pacman_transition, new_game_state)
+                new_state_ind = expand_from_state!(pt, new_game_state)
                 add_edge!(
-                    pacman_transition,
+                    pt,
                     nondeterministic_state_ind,
                     new_state_ind,
                     ghost_actions[i, :],
@@ -249,19 +243,19 @@ function permute_vecvec(arr::Vector{Vector{Int}})
 end
 
 function expand_from_initial_state!(
-    pacman_transition::PacmanTransition,
+    pt::PacmanTransition,
     game_state::PacmanGameState,
 )
     initial_state_ind = findindex(
         game_state,
-        pacman_transition.vertex_data,
-        pacman_transition.game_mode_pellets,
+        pt.vertex_data,
+        pt.game_mode_pellets,
     )
     if initial_state_ind == 0
-        initial_state_ind = expand_from_state!(pacman_transition, game_state)
+        initial_state_ind = expand_from_state!(pt, game_state)
     end
-    if initial_state_ind ∉ pacman_transition.initial_states
-        push!(pacman_transition.initial_states, initial_state_ind)
+    if initial_state_ind ∉ pt.initial
+        push!(pt.initial, initial_state_ind)
     end
 
 end
