@@ -308,13 +308,15 @@ function visualize_game_history(pacman::Pacman,winning_tiles::Vector{Int64})
         # Venue
         f = Figure(backgroundcolor = :white, resolution = (500, 500))
         ax = Axis(f[1, 1], aspect = 1)
+        @show [0, pacman.game_size]
+        xlims!(ax, 0.5, pacman.game_size+0.5)
+        ylims!(ax, 0.5, pacman.game_size+0.5)
         hidedecorations!(ax)
         heatmap!(ax, vec_x, vec_y, vec_z, colormap = Reverse(:tempo))
 
         # Winning region 
         vec_z_wr = ones(length(winning_tiles))
-        vec_z_wr[1] = 0.99
-        heatmap!(ax, vec_x[winning_tiles], vec_y[winning_tiles], vec_z_wr, colormap = Reverse(:greens))
+        heatmap!(ax, [-1; vec_x[winning_tiles]], [-1; vec_y[winning_tiles]], [0; vec_z_wr], colormap = Reverse(:greens))
 
         # Pellets
         if pacman.game_mode_pellets
