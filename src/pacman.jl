@@ -298,26 +298,82 @@ function visualize_game_history(pacman::Pacman,winning_tiles::Vector{Int64})
     lg = 0.6  # ghosts
     lf = 0.1 # food
 
+    nframes = length(pacman.game_history)
+    framerate = 1
+
     vec_x = repeat(1:pacman.game_size, pacman.game_size)
     vec_y = repeat(1:pacman.game_size, inner = pacman.game_size)
     vec_z = ones(pacman.game_size^2)
     vec_z[pacman.available_squares] .= 0
 
-    for i = 1:length(pacman.game_history)
+    # for i = 1:length(pacman.game_history)
+
+    #     # Venue
+    #     f = Figure(backgroundcolor = :white, resolution = (500, 500))
+    #     ax = Axis(f[1, 1], aspect = 1)
+    #     @show [0, pacman.game_size]
+    #     xlims!(ax, 0.5, pacman.game_size+0.5)
+    #     ylims!(ax, 0.5, pacman.game_size+0.5)
+    #     hidedecorations!(ax)
+    #     heatmap!(ax, vec_x, vec_y, vec_z, colormap = Reverse(:tempo))
+
+    #     # Winning region 
+    #     vec_z_wr = ones(length(winning_tiles))
+    #     heatmap!(ax, [-1; vec_x[winning_tiles]], [-1; vec_y[winning_tiles]], [0; vec_z_wr], colormap = Reverse(:greens))
+
+    #     # Pellets
+    #     if pacman.game_mode_pellets
+    #         xf_x = vec_x[pacman.game_history[i].pellets]
+    #         xf_y = vec_y[pacman.game_history[i].pellets]
+    #         for j = 1:sum(pacman.game_history[i].pellets)
+    #             poly!(Circle(Point2f(xf_x[j], xf_y[j]), lf), color = :yellow) 
+    #         end
+    #     end 
+
+    #     # Pac-Man
+    #     xp = pacman.game_history[i].xp
+    #     poly!(Circle(Point2f(vec_x[xp], vec_y[xp]), lp), color = :yellow)
+
+    #     # Ghosts
+    #     for j = 1:pacman.ng
+    #         xg = pacman.game_history[i].xg[j]
+    #         poly!(
+    #             Point2f[
+    #                 (-lg / 2, -lg * sqrt(3) / 6),
+    #                 (lg / 2, -lg * sqrt(3) / 6),
+    #                 (0, lg * sqrt(3) / 3),
+    #             ] .+ Point2f[(vec_x[xg], vec_y[xg])],
+    #             color = :red,
+    #         )
+    #     end
+
+    #     display(f)
+
+    #     sleep(0.75)
+    # end
+
+    # Record animation 
+    animation_iterator = range(1,length(pacman.game_history))
+
+    # Figure 
+    f = Figure(backgroundcolor = :white, resolution = (500, 500))
+    ax = Axis(f[1, 1], aspect = 1)
+    @show [0, pacman.game_size]
+    xlims!(ax, 0.5, pacman.game_size+0.5)
+    ylims!(ax, 0.5, pacman.game_size+0.5)
+    hidedecorations!(ax)
+
+    # Start recording
+    record(f, "animation.gif", animation_iterator;
+        framerate = framerate) do i
 
         # Venue
-        f = Figure(backgroundcolor = :white, resolution = (500, 500))
-        ax = Axis(f[1, 1], aspect = 1)
-        @show [0, pacman.game_size]
-        xlims!(ax, 0.5, pacman.game_size+0.5)
-        ylims!(ax, 0.5, pacman.game_size+0.5)
-        hidedecorations!(ax)
         heatmap!(ax, vec_x, vec_y, vec_z, colormap = Reverse(:tempo))
 
         # Winning region 
         vec_z_wr = ones(length(winning_tiles))
         heatmap!(ax, [-1; vec_x[winning_tiles]], [-1; vec_y[winning_tiles]], [0; vec_z_wr], colormap = Reverse(:greens))
-
+        
         # Pellets
         if pacman.game_mode_pellets
             xf_x = vec_x[pacman.game_history[i].pellets]
@@ -343,10 +399,6 @@ function visualize_game_history(pacman::Pacman,winning_tiles::Vector{Int64})
                 color = :red,
             )
         end
-
-        display(f)
-
-        sleep(0.75)
     end
 
 end
