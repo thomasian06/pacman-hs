@@ -1,10 +1,26 @@
 module ModelCheckers
 
-export Attr, FPre
+export Attr, FPre!, get_safe_actions
 
 import FromFile: @from
 import LightGraphs: inneighbors, outneighbors
 @from "transition.jl" import PacmanTransitions: PacmanTransition, DEdge, NDEdge
+
+function get_safe_actions(pt::PacmanTransition, safe_region::Set{Int})
+
+    action_map = Set{DEdge}()
+
+    for s in intersect(safe_region, pt.deterministic_vertices)
+        O = outneighbors(pt.g, s)
+        o = first(intersect(O, safe_region))
+        action_edge = pt.edge_data[findfirst(x -> x.src == s && x.dst == o, pt.edge_data)]
+        push!(action_map, action_edge)
+    end
+
+    return action_map
+
+end
+
 
 function Attr(pt::PacmanTransition, F::Set{Int}, p1_states::Set{Int})
 
