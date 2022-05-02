@@ -1,23 +1,35 @@
 
 import FromFile: @from
 
-@from "src/pacman.jl" using Pacmen
+using LightGraphs
 
-# game_size = 2
-# available_squares = [1, 2]
-# game_size = 3
-# available_squares = [1, 2, 3, 4, 6, 7, 8, 9]
+@from "src/pacman.jl" using Pacmen
+@from "src/transition.jl" using PacmanTransitions
+@from "src/model_checkers.jl" using ModelCheckers
+
+## GAME SETUP 
+
 game_size = 5
 available_squares =
     [1, 2, 3, 4, 5, 6, 8, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 23, 24, 25]
 
-
+# Reachability game
 xp = 1
 xg = [25, 13]
 ng = 2
-pg_types = [:RandomGhostPolicy, :ShortestDistancePolicy]
-# pg_types = [:RandomGhostPolicy]
-available_pellets = [21]
+pg_types = [:ShortestDistancePolicy, :ShortestDistancePolicy]
+available_pellets = [8, 21]
+game_mode_pellets = true
+
+# Safety game
+# xp = 1
+# xg = [25]
+# ng = 1
+# pg_types = [:ShortestDistancePolicy]
+# available_pellets = []
+# game_mode_pellets = false
+
+## TRANSITION SYSTEM 
 
 pacman = Pacman(
     game_size = game_size,
@@ -26,12 +38,84 @@ pacman = Pacman(
     pg_types = pg_types,
     available_squares = available_squares,
     available_pellets = available_pellets,
-    game_mode_pellets = true,
+    game_mode_pellets = game_mode_pellets,
 )
 
-# Move up 4 times
-update_pacman!(pacman, 1)
+squares = pacman.squares
+pg = pacman.pg
+game_state = pacman.game_state
+actions = pacman.actions
+game_mode_pellets = pacman.game_mode_pellets
 
-# Plot 
-visualize_game_history(pacman)
+pt = PacmanTransition(pg, squares, actions, game_mode_pellets = game_mode_pellets)
 
+@time expand_from_initial_state!(pt, game_state)
+
+@time for xp in available_squares
+    pacman = Pacman(
+        game_size = game_size,
+        xp = xp,
+        xg = xg,
+        pg_types = pg_types,
+        available_squares = available_squares,
+        available_pellets = available_pellets,
+        game_mode_pellets = game_mode_pellets,
+    )
+    game_state = pacman.game_state
+    expand_from_initial_state!(pt, game_state)
+end
+
+pt.vertex_data
+
+
+# SAFETY REGION COMPUTATION 
+attr, action_map = Attr(pt, pt.accepting, pt.deterministic_vertices)
+
+winning_region = intersect(attr, pt.initial)
+
+pacman_start = Set{Int}()
+for s in collect(winning_region)
+    push!(pacman_start, pt.vertex_data[s].xp)
+end
+winning_tiles = collect(pacman_start)
+
+@show available_squares
+@show winning_region
+
+## PLAY GAME
+
+function run_test(pt,action_map,winning_tiles)
+
+    pacman = Pacman(
+        game_size = game_size,
+        xp = xp,
+        xg = xg,
+        pg_types = pg_types,
+        available_squares = available_squares,
+        available_pellets = available_pellets,
+        game_mode_pellets = game_mode_pellets,
+    )
+
+    initial_state = pacman.game_state
+    initial_node = findfirst(x -> equals(x, initial_state, game_mode_pellets), pt.vertex_data)
+
+    action_map = collect(action_map)
+    current_node = initial_node
+
+    i = 1
+    @time while !pacman.game_state.game_over
+        println(i)
+        current_edge = action_map[findfirst(x -> x.src == current_node, action_map)]
+        current_node = current_edge.dst
+        action = current_edge.act
+        update_pacman!(pacman, action)
+        i += 1
+    end
+
+    @show pacman.game_state.win
+
+    visualize_game_history(pacman,winning_tiles)
+
+end
+
+run_test(pt,action_map,winning_tiles)

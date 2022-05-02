@@ -293,12 +293,7 @@ function generate_squares(game_size::Int, available_squares::Array{Int})
     return squares
 end
 
-function visualize_game_history(pacman::Pacman)
-
-    # Grid points
-    # grid_x = (1:pacman.game_size)'.*ones(pacman.game_size)
-    # grid_y = reverse(grid_x',dims = 1)
-
+function visualize_game_history(pacman::Pacman,winning_tiles::Vector{Int64})
     lp = 0.3  # pacman
     lg = 0.6  # ghosts
     lf = 0.1 # food
@@ -316,11 +311,19 @@ function visualize_game_history(pacman::Pacman)
         hidedecorations!(ax)
         heatmap!(ax, vec_x, vec_y, vec_z, colormap = Reverse(:tempo))
 
+        # Winning region 
+        vec_z_wr = ones(length(winning_tiles))
+        vec_z_wr[1] = 0.99
+        heatmap!(ax, vec_x[winning_tiles], vec_y[winning_tiles], vec_z_wr, colormap = Reverse(:greens))
+
         # Pellets
-        for j = 1:length(pacman.available_pellets)
-            xf = pacman.available_pellets[j]
-            poly!(Circle(Point2f(vec_x[xf], vec_y[xf]), lf), color = :yellow) #    
-        end
+        if pacman.game_mode_pellets
+            xf_x = vec_x[pacman.game_history[i].pellets]
+            xf_y = vec_y[pacman.game_history[i].pellets]
+            for j = 1:sum(pacman.game_history[i].pellets)
+                poly!(Circle(Point2f(xf_x[j], xf_y[j]), lf), color = :yellow) 
+            end
+        end 
 
         # Pac-Man
         xp = pacman.game_history[i].xp
@@ -343,9 +346,6 @@ function visualize_game_history(pacman::Pacman)
 
         sleep(0.75)
     end
-
-    # Generate coordinates form available squares
-
 
 end
 
