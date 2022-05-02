@@ -62,7 +62,7 @@ end
 
 pt.vertex_data
 
-attr, action_map = Attr(pt, pt.unsafe, pt.nondeterministic_vertices, true)
+attr, action_map = Attr(pt, pt.unsafe, pt.nondeterministic_vertices)
 
 winning_region = intersect(attr, pt.initial)
 
