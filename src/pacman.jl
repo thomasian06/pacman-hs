@@ -317,9 +317,10 @@ function visualize_game_history(pacman::Pacman)
         heatmap!(ax, vec_x, vec_y, vec_z, colormap = Reverse(:tempo))
 
         # Pellets
-        for j = 1:length(pacman.available_pellets)
-            xf = pacman.available_pellets[j]
-            poly!(Circle(Point2f(vec_x[xf], vec_y[xf]), lf), color = :yellow) #    
+        xf_x = vec_x[pacman.game_history[i].pellets]
+        xf_y = vec_y[pacman.game_history[i].pellets]
+        for j = 1:sum(pacman.game_history[i].pellets)
+            poly!(Circle(Point2f(xf_x[j], xf_y[j]), lf), color = :yellow) #    
         end
 
         # Pac-Man
