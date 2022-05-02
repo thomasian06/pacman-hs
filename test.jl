@@ -18,11 +18,11 @@ available_squares =
     [1, 2, 3, 4, 5, 6, 8, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 23, 24, 25]
 
 xp = 1
-xg = [25, 13]
-ng = 2
-pg_types = [:ShortestDistancePolicy, :ShortestDistancePolicy]
-available_pellets = [8, 21]
-game_mode_pellets = true
+xg = [25]
+ng = 1
+pg_types = [:RandomGhostPolicy]
+available_pellets = []
+game_mode_pellets = false
 
 pacman = Pacman(
     game_size = game_size,
@@ -62,7 +62,7 @@ end
 
 pt.vertex_data
 
-attr, action_map = Attr(pt, pt.accepting, pt.deterministic_vertices)
+attr, action_map = Attr(pt, pt.unsafe, pt.nondeterministic_vertices, true)
 
 winning_region = intersect(attr, pt.initial)
 
@@ -92,7 +92,7 @@ action_map = collect(action_map)
 current_node = initial_node
 
 i = 1
-while !pacman.game_state.game_over
+@time while !pacman.game_state.game_over
     println(i)
     current_edge = action_map[findfirst(x -> x.src == current_node, action_map)]
     current_node = current_edge.dst
@@ -100,3 +100,37 @@ while !pacman.game_state.game_over
     update_pacman!(pacman, action)
     i += 1
 end
+
+pacman.game_state.win
+
+
+##
+
+# using DynamicalSystems
+
+
+
+# @inline @inbounds function f(s::SVector, p, t)
+
+#     x = s[1]
+#     y = s[2]
+#     dx = s[3]
+#     dy = s[4]
+
+
+
+#     return SVector{4}()
+
+# end
+
+# ##
+
+# using DifferentialEquations
+# function f(du,u,p,t)
+#     du[1] = -u[1]
+# end
+# u0 = [10.0]
+# const V = 1
+# prob = ODEProblem(f,u0,(0.0,10.0))
+# sol = solve(prob,Tsit5())
+# using Plots; plot(sol)

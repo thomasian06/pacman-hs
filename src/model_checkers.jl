@@ -6,12 +6,17 @@ import FromFile: @from
 import LightGraphs: inneighbors, outneighbors
 @from "transition.jl" import PacmanTransitions: PacmanTransition, DEdge, NDEdge
 
-function Attr(pt::PacmanTransition, F::Set{Int}, p1_states::Set{Int})
+function Attr(
+    pt::PacmanTransition,
+    F::Set{Int},
+    p1_states::Set{Int},
+    use_nd_edges::Bool = false,
+)
 
     attr_prev = copy(F)
     action_map = Set{Union{DEdge,NDEdge}}()
     while true
-        attr = union(attr_prev, FPre!(pt, attr_prev, p1_states, action_map))
+        attr = union(attr_prev, FPre!(pt, attr_prev, p1_states, action_map, use_nd_edges))
         issetequal(attr, attr_prev) ? (return attr, action_map) : attr_prev = copy(attr)
     end
 
@@ -22,6 +27,7 @@ function FPre!(
     F::Set{Int},
     p1_states::Set{Int},
     action_map::Set{Union{DEdge,NDEdge}},
+    use_nd_edges::Bool = false,
 )
     f_pre = Set{Int}()
     for s in F
@@ -34,12 +40,25 @@ function FPre!(
     new_s = setdiff(f_pre, F)
     intersect!(new_s, p1_states)
 
-    for s in new_s
-        sF = first(intersect(outneighbors(pt.g, s), F))
-        push!(
-            action_map,
-            pt.edge_data[findfirst(x -> x.src == s && x.dst == sF, pt.edge_data)],
-        )
+    if use_nd_edges
+        for s in new_s
+            sF = first(intersect(outneighbors(pt.g, s), F))
+            push!(
+                action_map,
+                pt.nondeterministic_edge_data[findfirst(
+                    x -> x.src == s && x.dst == sF,
+                    pt.nondeterministic_edge_data,
+                )],
+            )
+        end
+    else
+        for s in new_s
+            sF = first(intersect(outneighbors(pt.g, s), F))
+            push!(
+                action_map,
+                pt.edge_data[findfirst(x -> x.src == s && x.dst == sF, pt.edge_data)],
+            )
+        end
     end
 
     return f_pre
