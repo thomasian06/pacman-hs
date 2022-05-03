@@ -31,7 +31,7 @@ function run_safety(pacman::Pacman, num_moves_animation::Int = 20, filename::Str
     @time expand_from_initial_state!(pt, game_state)
 
     @time for xp in available_squares
-        pacman = Pacman(
+        p = Pacman(
             game_size = game_size,
             xp = xp,
             xg = xg,
@@ -40,10 +40,11 @@ function run_safety(pacman::Pacman, num_moves_animation::Int = 20, filename::Str
             available_pellets = available_pellets,
             game_mode_pellets = game_mode_pellets,
         )
-        game_state = pacman.game_state
+        game_state = p.game_state
         expand_from_initial_state!(pt, game_state)
     end
 
+    xp = pacman.game_state.xp
     pt.vertex_data
 
     unsafe_region, action_map = Attr(pt, pt.unsafe, pt.nondeterministic_vertices)
@@ -66,31 +67,35 @@ function run_safety(pacman::Pacman, num_moves_animation::Int = 20, filename::Str
 
     ## play pacman safety game
 
-    pacman = Pacman(
-        game_size = game_size,
-        xp = xp,
-        xg = xg,
-        pg_types = pg_types,
-        available_squares = available_squares,
-        available_pellets = available_pellets,
-        game_mode_pellets = game_mode_pellets,
-    )
+    if xp ∉ pacman_start
+        println("Impossible to win from initial state.")
+    else
+        pacman = Pacman(
+            game_size = game_size,
+            xp = xp,
+            xg = xg,
+            pg_types = pg_types,
+            available_squares = available_squares,
+            available_pellets = available_pellets,
+            game_mode_pellets = game_mode_pellets,
+        )
 
-    initial_state = pacman.game_state
-    initial_node = findfirst(x -> equals(x, initial_state, game_mode_pellets), pt.vertex_data)
+        initial_state = pacman.game_state
+        initial_node = findfirst(x -> equals(x, initial_state, game_mode_pellets), pt.vertex_data)
 
-    action_map = collect(action_map)
-    current_node = initial_node
+        action_map = collect(action_map)
+        current_node = initial_node
 
-    @time for i = 1:num_moves_animation
-        current_edge = action_map[findfirst(x -> x.src == current_node, action_map)]
-        action = current_edge.act
-        update_pacman!(pacman, action)
-        current_node = current_edge.dst
-        if !pt.deterministic
-            O = outneighbors(pt.g, current_node)
-            for o in O
-                equals(pacman.game_state, pt.vertex_data[o]) && (current_node = o; break)
+        @time for i = 1:num_moves_animation
+            current_edge = action_map[findfirst(x -> x.src == current_node, action_map)]
+            action = current_edge.act
+            update_pacman!(pacman, action)
+            current_node = current_edge.dst
+            if !pt.deterministic
+                O = outneighbors(pt.g, current_node)
+                for o in O
+                    equals(pacman.game_state, pt.vertex_data[o]) && (current_node = o; break)
+                end
             end
         end
     end
@@ -122,7 +127,7 @@ function run_reachability(pacman::Pacman, filename::String = "reachability_anima
     @time expand_from_initial_state!(pt, game_state)
 
     @time for xp in available_squares
-        pacman = Pacman(
+        p = Pacman(
             game_size = game_size,
             xp = xp,
             xg = xg,
@@ -131,13 +136,13 @@ function run_reachability(pacman::Pacman, filename::String = "reachability_anima
             available_pellets = available_pellets,
             game_mode_pellets = game_mode_pellets,
         )
-        game_state = pacman.game_state
+        game_state = p.game_state
         expand_from_initial_state!(pt, game_state)
     end
 
     pt.vertex_data
 
-
+    xp = pacman.game_state.xp
     # SAFETY REGION COMPUTATION 
     attr, action_map = Attr(pt, pt.accepting, pt.deterministic_vertices)
 
@@ -152,34 +157,42 @@ function run_reachability(pacman::Pacman, filename::String = "reachability_anima
     @show available_squares
     @show winning_region
 
-    pacman = Pacman(
-        game_size = game_size,
-        xp = xp,
-        xg = xg,
-        pg_types = pg_types,
-        available_squares = available_squares,
-        available_pellets = available_pellets,
-        game_mode_pellets = game_mode_pellets,
-    )
+    if xp ∉ pacman_start
+        println("Impossible to win from initial state.")
+    else
 
-    initial_state = pacman.game_state
-    initial_node = findfirst(x -> equals(x, initial_state, game_mode_pellets), pt.vertex_data)
+        pacman = Pacman(
+            game_size = game_size,
+            xp = xp,
+            xg = xg,
+            pg_types = pg_types,
+            available_squares = available_squares,
+            available_pellets = available_pellets,
+            game_mode_pellets = game_mode_pellets,
+        )
 
-    action_map = collect(action_map)
-    current_node = initial_node
+        initial_state = pacman.game_state
+        initial_node = findfirst(x -> equals(x, initial_state, game_mode_pellets), pt.vertex_data)
 
-    while !pacman.game_state.game_over
-        current_edge = action_map[findfirst(x -> x.src == current_node, action_map)]
-        action = current_edge.act
-        update_pacman!(pacman, action)
-        current_node = current_edge.dst
-        if !pt.deterministic
-            O = outneighbors(pt.g, current_node)
-            for o in O
-                equals(pacman.game_state, pt.vertex_data[o]) && (current_node = o; break)
+        action_map = collect(action_map)
+        current_node = initial_node
+
+
+        while !pacman.game_state.game_over
+            current_edge = action_map[findfirst(x -> x.src == current_node, action_map)]
+            action = current_edge.act
+            update_pacman!(pacman, action)
+            current_node = current_edge.dst
+            if !pt.deterministic
+                O = outneighbors(pt.g, current_node)
+                for o in O
+                    equals(pacman.game_state, pt.vertex_data[o]) && (current_node = o; break)
+                end
             end
         end
+
     end
+
 
     visualize_game_history(pacman, winning_tiles, filename)
 

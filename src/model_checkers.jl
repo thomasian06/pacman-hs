@@ -12,6 +12,9 @@ function get_safe_actions(pt::PacmanTransition, safe_region::Set{Int})
 
     for s in intersect(safe_region, pt.deterministic_vertices)
         O = outneighbors(pt.g, s)
+        if isempty(intersect(O, safe_region))
+            continue
+        end
         o = first(intersect(O, safe_region))
         action_edge = pt.edge_data[findfirst(x -> x.src == s && x.dst == o, pt.edge_data)]
         push!(action_map, action_edge)
