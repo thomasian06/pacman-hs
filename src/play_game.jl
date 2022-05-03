@@ -1,37 +1,27 @@
+module PlayGame
+
+export run_reachability, run_safety
 
 import FromFile: @from
 
 using LightGraphs
 
-@from "src/pacman.jl" using Pacmen
-@from "src/transition.jl" using PacmanTransitions
-@from "src/model_checkers.jl" using ModelCheckers
+@from "pacman.jl" using Pacmen
+@from "transition.jl" using PacmanTransitions
+@from "model_checkers.jl" using ModelCheckers
 
-function run_safety()
-    game_size = 5
-    available_squares =
-        [1, 2, 3, 4, 5, 6, 8, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 23, 24, 25]
+function run_safety(pacman::Pacman, num_moves_animation::Int = 20, filename::String = "safety_animation.gif")
 
-    xp = 1
-    xg = [25]
-    ng = 1
-    pg_types = [:RandomGhostPolicy]
-    available_pellets = []
-    game_mode_pellets = false
-
-    pacman = Pacman(
-        game_size = game_size,
-        xp = xp,
-        xg = xg,
-        pg_types = pg_types,
-        available_squares = available_squares,
-        available_pellets = available_pellets,
-        game_mode_pellets = game_mode_pellets,
-    )
-
+    xp = pacman.game_state.xp
+    xg = pacman.game_state.xg
+    available_squares = pacman.available_squares
+    available_pellets = pacman.available_pellets
+    game_mode_pellets = pacman.game_mode_pellets
+    game_size = pacman.game_size
+    game_state = pacman.game_state
     squares = pacman.squares
     pg = pacman.pg
-    game_state = pacman.game_state
+    pg_types = pacman.pg_types
     actions = pacman.actions
     game_mode_pellets = pacman.game_mode_pellets
 
@@ -92,9 +82,7 @@ function run_safety()
     action_map = collect(action_map)
     current_node = initial_node
 
-    ##
-    max_num_moves = 10
-    @time for i = 1:max_num_moves
+    @time for i = 1:num_moves_animation
         current_edge = action_map[findfirst(x -> x.src == current_node, action_map)]
         action = current_edge.act
         update_pacman!(pacman, action)
@@ -108,42 +96,27 @@ function run_safety()
     end
 
     # visualize
-    visualize_game_history(pacman,winning_tiles)
+    visualize_game_history(pacman, winning_tiles, filename)
 
 end
 
-function run_reach()
+function run_reachability(pacman::Pacman, filename::String = "reachability_animation.gif")
 
-    game_size = 5
-    available_squares =
-        [1, 2, 3, 4, 5, 6, 8, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 23, 24, 25]
-
-    # Reachability game
-    xp = 1
-    xg = [25, 13]
-    ng = 2
-    pg_types = [:ShortestDistancePolicy, :ShortestDistancePolicy]
-    available_pellets = [8, 21]
-    game_mode_pellets = true
-
-    ## TRANSITION SYSTEM 
-
-    pacman = Pacman(
-        game_size = game_size,
-        xp = xp,
-        xg = xg,
-        pg_types = pg_types,
-        available_squares = available_squares,
-        available_pellets = available_pellets,
-        game_mode_pellets = game_mode_pellets,
-    )
+    xp = pacman.game_state.xp
+    xg = pacman.game_state.xg
+    available_squares = pacman.available_squares
+    available_pellets = pacman.available_pellets
+    game_mode_pellets = pacman.game_mode_pellets
+    game_size = pacman.game_size
+    game_state = pacman.game_state
 
     squares = pacman.squares
     pg = pacman.pg
-    game_state = pacman.game_state
+    pg_types = pacman.pg_types
     actions = pacman.actions
     game_mode_pellets = pacman.game_mode_pellets
 
+    # generate the pacman transition automaton
     pt = PacmanTransition(pg, squares, actions, game_mode_pellets = game_mode_pellets)
 
     @time expand_from_initial_state!(pt, game_state)
@@ -195,26 +168,23 @@ function run_reach()
     action_map = collect(action_map)
     current_node = initial_node
 
-    i = 1
-    @time while !pacman.game_state.game_over
-        println(i)
+    while !pacman.game_state.game_over
         current_edge = action_map[findfirst(x -> x.src == current_node, action_map)]
-        current_node = current_edge.dst
         action = current_edge.act
         update_pacman!(pacman, action)
-        i += 1
+        current_node = current_edge.dst
+        if !pt.deterministic
+            O = outneighbors(pt.g, current_node)
+            for o in O
+                equals(pacman.game_state, pt.vertex_data[o]) && (current_node = o; break)
+            end
+        end
     end
 
-    @show pacman.game_state.win
+    visualize_game_history(pacman, winning_tiles, filename)
 
-    visualize_game_history(pacman,winning_tiles)
+    return true
 
 end
 
-##
-
-run_safety()
-
-##
-
-run_reach()
+end # module PlayGame end

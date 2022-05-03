@@ -82,15 +82,15 @@ end
 struct DeterministicRoutePolicy <: GhostPolicy
     squares::BitArray{2}
     actions::Vector{Int}
-    route::Vector{Int}
     deterministic::Bool
     function DeterministicRoutePolicy(squares::BitArray{2}, actions::Vector{Int})
-        new([1], [1], [1], true)
+        new(squares, actions, true)
     end
 end
 
 function ghost_action(xp::Int, xg::Int, policy::DeterministicRoutePolicy)
-    return policy.route[xg]
+    action = findfirst(policy.squares[xg, :])
+    return policy.actions[action]
 end
 
 function get_available_policy_actions(xp::Int, xg::Int, policy::DeterministicRoutePolicy)

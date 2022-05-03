@@ -104,6 +104,7 @@ mutable struct Pacman
     available_pellets::Vector{}
     ng::Int # number of ghosts on board
     pg::Vector{<:GhostPolicy} # array of the ghost policies
+    pg_types::Vector{Symbol}
     squares::BitArray{2} # array of actions and squares (have values 0-15 for each square, with a bit describing if an action is available in NESW order, LSB is W, bit 3 is N)
     actions::Vector{Int}
     game_history::Vector{PacmanGameState} # stores game history
@@ -166,6 +167,7 @@ mutable struct Pacman
             available_pellets,
             ng,
             pg,
+            pg_types,
             squares,
             actions,
             game_history,
@@ -293,7 +295,7 @@ function generate_squares(game_size::Int, available_squares::Array{Int})
     return squares
 end
 
-function visualize_game_history(pacman::Pacman,winning_tiles::Vector{Int64})
+function visualize_game_history(pacman::Pacman, winning_tiles::Vector{Int64}, filename::String = "animation.gif")
     lp = 0.3  # pacman
     lg = 0.6  # ghosts
     lf = 0.1 # food
@@ -364,7 +366,7 @@ function visualize_game_history(pacman::Pacman,winning_tiles::Vector{Int64})
     hidedecorations!(ax)
 
     # Start recording
-    record(f, "animation.gif", animation_iterator;
+    record(f, filename, animation_iterator;
         framerate = framerate) do i
 
         # Venue
