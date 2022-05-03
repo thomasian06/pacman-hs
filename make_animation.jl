@@ -14,9 +14,9 @@ available_squares =
     [1, 2, 3, 4, 5, 6, 8, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 23, 24, 25]
 
 xp = 1
-xg = [25, 13]
+xg = [21, 13]
 ng = 1
-pg_types = [:RandomGhostPolicy, :RandomGhostPolicy]
+pg_types = [:ShortestDistancePolicy, :ShortestDistancePolicy]
 available_pellets = []
 game_mode_pellets = false
 
@@ -39,10 +39,10 @@ available_squares =
     [1, 2, 3, 4, 5, 6, 8, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 23, 24, 25]
 
 xp = 1
-xg = [16, 3]
+xg = [21, 13]
 ng = 1
-pg_types = [:ShortestDistancePolicy, :RandomGhostPolicy]
-available_pellets = [25]
+pg_types = [:ShortestDistancePolicy, :ShortestDistancePolicy]
+available_pellets = available_squares
 game_mode_pellets = true
 
 pacman = Pacman(
@@ -61,14 +61,44 @@ run_reachability(pacman, "reachability_animation.gif")
 ## Run Bigger Safety game
 
 game_size = 7
-available_squares =
-    [1, 2, 3, 4, 5, 6, 7,
-     8, 10, 12, 14,
-     15, 16, 17, 19, 20, 21,
-     22, 28,
-     29, 30, 31, 33, 34, 35,
-     36, 38, 40, 42,
-     43, 44, 45, 46, 47, 48, 49]
+available_squares = [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    10,
+    12,
+    14,
+    15,
+    16,
+    17,
+    19,
+    20,
+    21,
+    22,
+    28,
+    29,
+    30,
+    31,
+    33,
+    34,
+    35,
+    36,
+    38,
+    40,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+]
 
 xp = 2
 xg = [7, 49]

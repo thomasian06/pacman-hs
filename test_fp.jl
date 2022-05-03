@@ -58,8 +58,10 @@ function run_safety()
 
     unsafe_region, action_map = Attr(pt, pt.unsafe, pt.nondeterministic_vertices)
 
-    safe_region =
-        setdiff(union(pt.deterministic_vertices, pt.nondeterministic_vertices), unsafe_region)
+    safe_region = setdiff(
+        union(pt.deterministic_vertices, pt.nondeterministic_vertices),
+        unsafe_region,
+    )
 
     winning_region = intersect(safe_region, pt.initial)
 
@@ -87,7 +89,8 @@ function run_safety()
     )
 
     initial_state = pacman.game_state
-    initial_node = findfirst(x -> equals(x, initial_state, game_mode_pellets), pt.vertex_data)
+    initial_node =
+        findfirst(x -> equals(x, initial_state, game_mode_pellets), pt.vertex_data)
 
     action_map = collect(action_map)
     current_node = initial_node
@@ -108,7 +111,7 @@ function run_safety()
     end
 
     # visualize
-    visualize_game_history(pacman,winning_tiles)
+    visualize_game_history(pacman, winning_tiles)
 
 end
 
@@ -190,7 +193,8 @@ function run_reach()
     )
 
     initial_state = pacman.game_state
-    initial_node = findfirst(x -> equals(x, initial_state, game_mode_pellets), pt.vertex_data)
+    initial_node =
+        findfirst(x -> equals(x, initial_state, game_mode_pellets), pt.vertex_data)
 
     action_map = collect(action_map)
     current_node = initial_node
@@ -207,7 +211,7 @@ function run_reach()
 
     @show pacman.game_state.win
 
-    visualize_game_history(pacman,winning_tiles)
+    visualize_game_history(pacman, winning_tiles)
 
 end
 

@@ -295,7 +295,11 @@ function generate_squares(game_size::Int, available_squares::Array{Int})
     return squares
 end
 
-function visualize_game_history(pacman::Pacman, winning_tiles::Vector{Int64}, filename::String = "animation.gif")
+function visualize_game_history(
+    pacman::Pacman,
+    winning_tiles::Vector{Int64},
+    filename::String = "animation.gif",
+)
     lp = 0.3  # pacman
     lg = 0.6  # ghosts
     lf = 0.1 # food
@@ -309,19 +313,18 @@ function visualize_game_history(pacman::Pacman, winning_tiles::Vector{Int64}, fi
     vec_z[pacman.available_squares] .= 0
 
     # Record animation
-    animation_iterator = range(1,length(pacman.game_history))
+    animation_iterator = range(1, length(pacman.game_history))
 
     # Figure 
     f = Figure(backgroundcolor = :white, resolution = (500, 500))
     ax = Axis(f[1, 1], aspect = 1)
     @show [0, pacman.game_size]
-    xlims!(ax, 0.5, pacman.game_size+0.5)
-    ylims!(ax, 0.5, pacman.game_size+0.5)
+    xlims!(ax, 0.5, pacman.game_size + 0.5)
+    ylims!(ax, 0.5, pacman.game_size + 0.5)
     hidedecorations!(ax)
 
     # Start recording
-    record(f, filename, animation_iterator;
-        framerate = framerate) do i
+    record(f, filename, animation_iterator; framerate = framerate) do i
 
         # Venue
         heatmap!(ax, vec_x, vec_y, vec_z, colormap = Reverse(:tempo))
@@ -329,17 +332,23 @@ function visualize_game_history(pacman::Pacman, winning_tiles::Vector{Int64}, fi
         # Winning region 
         if !isempty(winning_tiles)
             vec_z_wr = ones(length(winning_tiles))
-            heatmap!(ax, [-1; vec_x[winning_tiles]], [-1; vec_y[winning_tiles]], [0; vec_z_wr], colormap = Reverse(:greens))
+            heatmap!(
+                ax,
+                [-1; vec_x[winning_tiles]],
+                [-1; vec_y[winning_tiles]],
+                [0; vec_z_wr],
+                colormap = Reverse(:greens),
+            )
         end
-        
+
         # Pellets
         if pacman.game_mode_pellets
             xf_x = vec_x[pacman.game_history[i].pellets]
             xf_y = vec_y[pacman.game_history[i].pellets]
             for j = 1:sum(pacman.game_history[i].pellets)
-                poly!(Circle(Point2f(xf_x[j], xf_y[j]), lf), color = :yellow) 
+                poly!(Circle(Point2f(xf_x[j], xf_y[j]), lf), color = :yellow)
             end
-        end 
+        end
 
         # Pac-Man
         xp = pacman.game_history[i].xp
