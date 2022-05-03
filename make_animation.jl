@@ -14,9 +14,8 @@ available_squares =
     [1, 2, 3, 4, 5, 6, 8, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 23, 24, 25]
 
 xp = 1
-xg = [21, 13]
-ng = 1
-pg_types = [:ShortestDistancePolicy, :ShortestDistancePolicy]
+xg = [21, 18]
+pg_types = [:ShortestDistancePolicy, :RandomGhostPolicy]
 available_pellets = []
 game_mode_pellets = false
 
